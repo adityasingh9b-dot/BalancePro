@@ -1,0 +1,8 @@
+{
+  "name": "BalancePro",
+  "description": "A high-performance live coaching application for trainers and clients, featuring real-time class tracking and integrated video conferencing.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
