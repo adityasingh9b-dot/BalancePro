@@ -73,11 +73,20 @@ const TrainerHome: React.FC<TrainerHomeProps> = ({ user, onStartMeeting }) => {
       setActiveClassData(data); // Storing full object to access meetingId
     });
 
-    // 5. Schedules Sync
-    onValue(ref(db, 'schedules'), (snap) => {
-      const data = snap.val();
-      setSchedules(data ? Object.values(data) : []);
-    });
+// 5. Schedules Sync (REPLACE THIS IN YOUR EFFECT)
+onValue(ref(db, 'schedules'), (snap) => {
+  const data = snap.val();
+  if (data) {
+    // Firebase object ko array mein badalte waqt ID ko object ke andar ghusao
+    const list = Object.entries(data).map(([id, value]: [string, any]) => ({
+      ...value,
+      id: id // Ensure kar rahe hain ki item.id wahi hai jo Firebase ki key hai
+    }));
+    setSchedules(list);
+  } else {
+    setSchedules([]);
+  }
+});
 
     // 6. Banner Sync
     onValue(ref(db, 'trending_banner'), (snap) => {
