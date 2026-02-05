@@ -576,7 +576,7 @@ return (
                         <div className="flex items-center gap-2">
                            <span className="text-[10px] text-zinc-500 font-bold">{client.phone}</span>
                            <span className="w-1 h-1 bg-zinc-700 rounded-full"></span>
-                           <span className="text-[10px] text-lime-400 font-bold tracking-widest uppercase">Key: {client.accessCode}</span>
+                           <span className="text-[10px] text-lime-400 font-bold tracking-widest">Key: {client.accessCode}</span>
                         </div>
                       </div>
                       <button onClick={() => handleDeleteClient(client.uid)} className="p-2 text-zinc-700 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
