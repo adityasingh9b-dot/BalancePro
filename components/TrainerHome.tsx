@@ -87,24 +87,25 @@ const TrainerHome: React.FC<TrainerHomeProps> = ({ user, onStartMeeting }) => {
   }, []);
 
 const startLiveClass = async (invites: string[], customId?: string) => {
-    // Agar scheduled class hai toh uski ID use karo, warna naya banao
+    // Safety check: invites hamesha array hona chahiye
+    const safeInvites = Array.isArray(invites) ? invites : [];
+    
     const uniqueId = customId || `BPStudio${Date.now()}${Math.random().toString(36).slice(2, 5)}`;
     
     const classData = {
       meetingId: uniqueId,
       status: 'live',
-      trainerName: user.name,
+      trainerName: user.name || 'Trainer',
       startTime: Date.now(),
-      invitedUids: invites || []
+      invitedUids: safeInvites // No more undefined
     };
 
     try {
-      // Path 'active_class' hi rakha hai jo tere useEffect mein hai
       await set(ref(db, 'active_class'), classData);
       onStartMeeting(uniqueId);
     } catch (e) {
-      console.error(e);
-      alert("Failed to update Firebase. Path check karein.");
+      console.error("Firebase Sync Error:", e);
+      alert("Firebase update failed! Check internet or console.");
     }
   };
   
@@ -266,20 +267,32 @@ const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
   const handleScheduleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!schedTitle || !schedTime) return;
+    if (!schedTitle || !schedTime) {
+      alert("Title and Time are required!");
+      return;
+    }
+
     const schedId = Date.now().toString();
     const newSchedule: ScheduleItem = {
       id: schedId,
       title: schedTitle,
       time: new Date(schedTime).toLocaleString(),
       timestamp: new Date(schedTime).getTime(),
-      trainer: user.name,
-      invitedUids: selectedInvites
+      trainer: user.name || 'Trainer',
+      invitedUids: selectedInvites || [] // Ensure it's never undefined
     };
-    await set(ref(db, `schedules/${schedId}`), newSchedule);
-    setSchedTitle('');
-    setSchedTime('');
-    setShowScheduleForm(false);
+
+    try {
+      await set(ref(db, `schedules/${schedId}`), newSchedule);
+      // Reset everything after success
+      setSchedTitle('');
+      setSchedTime('');
+      setSelectedInvites([]); // Clear selection for next time
+      setShowScheduleForm(false);
+    } catch (e) {
+      console.error("Schedule Save Error:", e);
+      alert("Failed to save schedule.");
+    }
   };
 
 return (
