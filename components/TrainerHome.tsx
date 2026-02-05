@@ -278,35 +278,35 @@ const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
 
 
-  const handleScheduleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!schedTitle || !schedTime) {
-      alert("Title and Time are required!");
-      return;
-    }
+const handleScheduleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!schedTitle || !schedTime) {
+    alert("Title and Time are required!");
+    return;
+  }
 
-    const schedId = Date.now().toString();
-    const newSchedule: ScheduleItem = {
-      id: schedId,
-      title: schedTitle,
-      time: new Date(schedTime).toLocaleString(),
-      timestamp: new Date(schedTime).getTime(),
-      trainer: user.name || 'Trainer',
-      invitedUids: selectedInvites || [] // Ensure it's never undefined
-    };
-
-    try {
-      await set(ref(db, `schedules/${schedId}`), newSchedule);
-      // Reset everything after success
-      setSchedTitle('');
-      setSchedTime('');
-      setSelectedInvites([]); // Clear selection for next time
-      setShowScheduleForm(false);
-    } catch (e) {
-      console.error("Schedule Save Error:", e);
-      alert("Failed to save schedule.");
-    }
+  const schedId = Date.now().toString();
+  const newSchedule: ScheduleItem = {
+    id: schedId,
+    title: schedTitle,
+    time: new Date(schedTime).toLocaleString(),
+    timestamp: new Date(schedTime).getTime(),
+    trainer: user.name || 'Trainer',
+    // YAHAN FIX HAI: Form submit hote waqt selected members ko array mein daal do
+    invitedUids: [...selectedInvites] 
   };
+
+  try {
+    await set(ref(db, `schedules/${schedId}`), newSchedule);
+    setSchedTitle('');
+    setSchedTime('');
+    setSelectedInvites([]); // Reset selection
+    setShowScheduleForm(false);
+    alert("Class Schedule ho gayi aur members lock ho gaye!");
+  } catch (e) {
+    alert("Failed to save schedule.");
+  }
+};
 
 return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -380,13 +380,20 @@ return (
                          {/* FIXED: Launch now correctly triggers startLiveClass with invited users */}
 <button 
   onClick={() => {
-    // Agar invites undefined hain toh khali array bhej rahe hain
-    const invites = item.invitedUids || []; 
-    startLiveClass(invites, item.id);
+    // 1. Pehle check karo ki is schedule mein koi pre-selected members hain?
+    const preSelectedMembers = item.invitedUids || []; 
+    
+    if (preSelectedMembers.length === 0) {
+      alert("Is class ke liye koi member select nahi kiya gaya tha!");
+    }
+
+    // 2. startLiveClass ko ye list bhej do, ye turant Firebase 'active_class' update kar dega
+    // Jisse users ko invite chala jayega (unka status 'invited' ho jayega)
+    startLiveClass(preSelectedMembers, item.id);
   }} 
   className="bg-zinc-800 text-lime-400 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-lime-400/20 hover:bg-lime-400 hover:text-zinc-950 transition-all"
 >
-  Launch
+  Launch & Invite
 </button>
                          
                          {/* NEW: Delete Button for Scheduled Classes */}
