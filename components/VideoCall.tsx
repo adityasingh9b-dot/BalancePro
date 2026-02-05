@@ -68,34 +68,25 @@ const domain = 'meet.ffmuc.net';
         displayName: userName + (isTrainer ? ' (Coach)' : '') 
       },
       
-      configOverwrite: {
-  prejoinPageEnabled: false,
-  disableSelfView: false,
-  // Ye mobile audio fix ke liye zaroori hain
-  startWithAudioMuted: false,
-  enableNoAudioDetection: true,
-  enableNoVideoDetection: true,
-  disableAudioLevels: false,
-  // Hardware integration
-  constraints: {
-    video: {
-      height: { ideal: 720, max: 720, min: 240 }
+const options = {
+    roomName: meetingId,
+    width: '100%',
+    height: '100%',
+    parentNode: document.querySelector('#jitsi-container'),
+    configOverwrite: {
+        prejoinPageEnabled: false, // Seedha meeting mein ghuso
+        startWithAudioMuted: false,
+        startWithVideoMuted: false,
+        iceTransportPolicy: 'all', // Connection fast karne ke liye
+    },
+    interfaceConfigOverwrite: {
+        // Mobile par buttons thode saaf dikhen
+        MOBILE_APP_PROMO: false, 
+    },
+    userInfo: {
+        displayName: userName
     }
-  },
-  // Mobile specific audio bridge
-  p2p: {
-    enabled: true // Mobile-to-mobile connectivity improve karta hai
-  }
-},
-      interfaceConfigOverwrite: {
-        TOOLBAR_BUTTONS: [
-          'microphone', 'camera', 'chat', 'settings', 
-          'raisehand', 'tileview', 'hangup'
-        ],
-        MOBILE_APP_PROMO: false,
-      }
-    };
-
+};
     try {
       jitsiApiRef.current = new window.JitsiMeetExternalAPI(domain, options);
       
