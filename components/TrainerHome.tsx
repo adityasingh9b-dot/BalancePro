@@ -317,10 +317,14 @@ return (
         ))}
       </div>
 
+
+
+
+
 {/* LIVE VIEW */}
 {view === 'classes' && (
   <div className="grid gap-6 md:grid-cols-2 animate-in fade-in">
-    {/* LEFT PANEL: DIRECT GO LIVE */}
+    {/* LEFT PANEL: DIRECT GO LIVE (Instant selection) */}
     <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-8 shadow-xl">
       <h3 className="text-zinc-500 text-[10px] font-black uppercase mb-8 tracking-[0.2em]">Studio Launch</h3>
       {isLive ? (
@@ -344,6 +348,7 @@ return (
           <div className="max-h-60 overflow-y-auto bg-zinc-950/50 rounded-2xl p-2 border border-zinc-800">
             {clients.map(c => (
               <label key={c.uid} className="flex items-center gap-4 p-4 hover:bg-zinc-800 rounded-xl cursor-pointer">
+                {/* Note: This uses selectedInvites for instant live */}
                 <input type="checkbox" checked={selectedInvites.includes(c.uid)} onChange={() => setSelectedInvites(prev => prev.includes(c.uid) ? prev.filter(i=>i!==c.uid) : [...prev, c.uid])} className="accent-lime-400 w-5 h-5 rounded-lg" />
                 <span className="text-sm font-bold text-white uppercase italic">{c.name}</span>
               </label>
@@ -369,11 +374,16 @@ return (
           <input type="datetime-local" value={schedTime} onChange={e => setSchedTime(e.target.value)} className="w-full bg-zinc-800 border border-zinc-700 p-4 rounded-xl text-white outline-none" />
           
           <div className="space-y-2">
-            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest ml-1">Pre-select Members:</p>
+            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest ml-1">Pre-select Members for this slot:</p>
             <div className="max-h-48 overflow-y-auto bg-zinc-950/50 rounded-2xl p-2 border border-zinc-800">
               {clients.map(c => (
                 <label key={c.uid} className="flex items-center gap-3 p-3 hover:bg-zinc-800 rounded-xl cursor-pointer">
-                  <input type="checkbox" checked={selectedInvites.includes(c.uid)} onChange={() => setSelectedInvites(prev => prev.includes(c.uid) ? prev.filter(i=>i!==c.uid) : [...prev, c.uid])} className="accent-lime-400 w-4 h-4 rounded" />
+                  <input 
+                    type="checkbox" 
+                    checked={selectedInvites.includes(c.uid)} 
+                    onChange={() => setSelectedInvites(prev => prev.includes(c.uid) ? prev.filter(i=>i!==c.uid) : [...prev, c.uid])} 
+                    className="accent-lime-400 w-4 h-4 rounded" 
+                  />
                   <span className="text-[11px] font-bold text-zinc-300 uppercase italic">{c.name}</span>
                 </label>
               ))}
@@ -392,22 +402,32 @@ return (
               <div>
                 <span className="block font-black text-white italic uppercase">{item.title}</span>
                 <span className="text-[10px] text-zinc-600 font-bold uppercase">{item.time}</span>
-                {item.invitedUids && (
-                  <span className="block text-[8px] text-lime-400/60 font-black uppercase mt-1">
-                    {item.invitedUids.length} Members Pre-selected
-                  </span>
+                {item.invitedUids && item.invitedUids.length > 0 && (
+                  <div className="flex gap-1 mt-1">
+                     <span className="text-[8px] bg-lime-400/10 text-lime-400 px-1.5 py-0.5 rounded font-black uppercase">
+                       {item.invitedUids.length} Members Pre-selected
+                     </span>
+                  </div>
                 )}
               </div>
               
               <div className="flex gap-2">
                 <button 
-                  onClick={() => startLiveClass(item.invitedUids || [], item.id)} 
+                  onClick={() => {
+                    // YAHAN FIX: selectedInvites state nahi, item.invitedUids use kar rahe hain
+                    const targetInvites = item.invitedUids || [];
+                    if (targetInvites.length === 0) {
+                      alert("No members were selected for this schedule!");
+                      return;
+                    }
+                    startLiveClass(targetInvites, item.id);
+                  }} 
                   className="bg-zinc-800 text-lime-400 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-lime-400/20 hover:bg-lime-400 hover:text-zinc-950 transition-all"
                 >
-                  Launch & Invite
+                  Launch
                 </button>
                 <button 
-                  onClick={() => confirm('Delete schedule?') && remove(ref(db, `schedules/${item.id}`))} 
+                  onClick={() => handleDeleteSchedule(item.id)} 
                   className="bg-zinc-900 text-red-500 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-red-500/20 opacity-0 group-hover:opacity-100 transition-all"
                 >
                   Del
@@ -415,16 +435,16 @@ return (
               </div>
             </div>
           ))}
-          {schedules.length === 0 && (
-            <div className="flex-1 flex flex-col items-center justify-center opacity-20 py-20">
-              <p className="text-[10px] font-black uppercase tracking-widest">No Scheduled Classes</p>
-            </div>
-          )}
         </div>
       )}
     </div>
   </div>
 )}
+
+
+
+
+
 
       {/* DIET VIEW */}
       {view === 'clients' && (
