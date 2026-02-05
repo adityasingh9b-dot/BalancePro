@@ -86,14 +86,12 @@ const TrainerHome: React.FC<TrainerHomeProps> = ({ user, onStartMeeting }) => {
     });
   }, []);
 
-const startLiveClass = async (invites: string[], customId?: string) => {
-    // 1. Safety Check: Agar invites undefined ho toh empty array ban jaye
+const startLiveClass = async (invites: string[], existingId?: string) => {
     const safeInvites = Array.isArray(invites) ? invites : [];
-    
-    // 2. Safety Check: Trainer name khali nahi hona chahiye
     const trainerName = user?.name || "Trainer";
     
-    const uniqueId = customId || `BPStudio${Date.now()}${Math.random().toString(36).slice(2, 5)}`;
+    // AGAR scheduled class hai toh wahi ID use hogi, warna nayi banegi
+    const uniqueId = existingId || `BPStudio${Date.now()}${Math.random().toString(36).slice(2, 5)}`;
     
     const classData = {
       meetingId: uniqueId,
@@ -103,18 +101,13 @@ const startLiveClass = async (invites: string[], customId?: string) => {
       invitedUids: safeInvites
     };
 
-    console.log("Attempting to sync with Firebase...", classData);
-
     try {
-      // Path check: 'active_class' node exist karna chahiye
       await set(ref(db, 'active_class'), classData);
-      console.log("Firebase Sync Success!");
-      onStartMeeting(uniqueId);
+      onStartMeeting(uniqueId); // Meeting start ho jayegi
     } catch (e: any) {
-      console.error("Firebase Detailed Error:", e);
       alert(`Update Failed: ${e.message}`);
     }
-  };
+};
   
   const handleDeleteSchedule = async (schedId: string) => {
     if (confirm("Bhai, ye scheduled class uda du?")) {
@@ -373,11 +366,11 @@ return (
                        <div className="flex gap-2">
                          {/* FIXED: Launch now correctly triggers startLiveClass with invited users */}
                          <button 
-                           onClick={() => startLiveClass(item.invitedUids || [])} 
-                           className="bg-zinc-800 text-lime-400 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-lime-400/20 hover:bg-lime-400 hover:text-zinc-950 transition-all"
-                         >
-                           Launch
-                         </button>
+  onClick={() => startLiveClass(item.invitedUids || [], item.id)} // item.id pass karna zaroori hai
+  className="..."
+>
+  Launch
+</button>
                          
                          {/* NEW: Delete Button for Scheduled Classes */}
                          <button 
