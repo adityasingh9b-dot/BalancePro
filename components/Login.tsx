@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { UserProfile, UserRole } from '../types';
-import { db } from '../services/mockDatabase';
+// 1. Mock hatao, asali Firebase lao
+import { db } from '../services/firebaseService'; 
+import { ref, get } from 'firebase/database';
 
 interface LoginProps {
   onLogin: (user: UserProfile) => void;
@@ -19,25 +21,32 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     
     try {
       const trainerPhone = '7355519301';
-      const isTrainer = phone === trainerPhone;
       const uid = `user_${phone}`;
       
-      const allUsers = await db.getAllUsers();
-      const existingUser = allUsers.find(u => u.phone === phone);
-
-      if (isTrainer) {
-        const user: UserProfile = {
+      // 2. Trainer Direct Login Logic
+      if (phone === trainerPhone) {
+        const trainerUser: UserProfile = {
           uid,
           name: 'Nitesh Tyagi',
           phone,
           role: UserRole.TRAINER,
           registeredOn: Date.now(),
         };
-        await db.set(`users/${uid}`, user);
-        onLogin(user);
-      } else if (existingUser) {
-        if (existingUser.accessCode === password) {
-          onLogin(existingUser);
+        // Trainer ko hamesha allow karein
+        onLogin(trainerUser);
+        return;
+      }
+
+      // 3. Client Firebase Fetch Logic
+      const userRef = ref(db, `users/${uid}`);
+      const snapshot = await get(userRef);
+
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        
+        // Match accessCode (Database mein 'asd' hai, password field se match karo)
+        if (userData.accessCode === password) {
+          onLogin(userData as UserProfile);
         } else {
           setError('Incorrect Access Code. Please verify with Coach Nitesh.');
         }
@@ -45,12 +54,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         setError('Access Denied. You are not registered in the BalancePro system.');
       }
     } catch (err) {
-      setError('Login failed. Please refresh and try again.');
+      console.error("Firebase Login Error:", err);
+      setError('Login failed. Check your internet or Firebase config.');
     } finally {
       setIsConnecting(false);
     }
   };
 
+  // ... (Baki ka UI same rahega)
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-6 font-sans">
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-3xl p-10 shadow-2xl">
