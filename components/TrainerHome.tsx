@@ -87,25 +87,29 @@ const TrainerHome: React.FC<TrainerHomeProps> = ({ user, onStartMeeting }) => {
   }, []);
 
 const startLiveClass = async (invites: string[], existingId?: string) => {
+    // Check if invites exists, if not make it empty array
     const safeInvites = Array.isArray(invites) ? invites : [];
-    const trainerName = user?.name || "Trainer";
     
-    // AGAR scheduled class hai toh wahi ID use hogi, warna nayi banegi
-    const uniqueId = existingId || `BPStudio${Date.now()}${Math.random().toString(36).slice(2, 5)}`;
+    // Check if we have a valid ID, else generate one
+    const uniqueId = existingId || `BPStudio${Date.now()}`;
     
     const classData = {
       meetingId: uniqueId,
       status: 'live',
-      trainerName: trainerName,
+      trainerName: user?.name || "Trainer",
       startTime: Date.now(),
       invitedUids: safeInvites
     };
 
+    console.log("Pushing Scheduled Class to Firebase:", classData);
+
     try {
+      // Is path par data set hona chahiye
       await set(ref(db, 'active_class'), classData);
-      onStartMeeting(uniqueId); // Meeting start ho jayegi
+      onStartMeeting(uniqueId);
     } catch (e: any) {
-      alert(`Update Failed: ${e.message}`);
+      console.error("Firebase Error Details:", e);
+      alert(`Firebase Update Failed: ${e.message}`);
     }
 };
   
@@ -365,9 +369,13 @@ return (
                        
                        <div className="flex gap-2">
                          {/* FIXED: Launch now correctly triggers startLiveClass with invited users */}
-                         <button 
-  onClick={() => startLiveClass(item.invitedUids || [], item.id)} // item.id pass karna zaroori hai
-  className="..."
+<button 
+  onClick={() => {
+    // Agar invites undefined hain toh khali array bhej rahe hain
+    const invites = item.invitedUids || []; 
+    startLiveClass(invites, item.id);
+  }} 
+  className="bg-zinc-800 text-lime-400 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-lime-400/20 hover:bg-lime-400 hover:text-zinc-950 transition-all"
 >
   Launch
 </button>
