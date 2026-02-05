@@ -67,20 +67,26 @@ const domain = 'meet.ffmuc.net';
       userInfo: { 
         displayName: userName + (isTrainer ? ' (Coach)' : '') 
       },
+      
       configOverwrite: {
-        prejoinPageEnabled: false,
-        enableLobby: false,
-        // Ye setting authentication prompt ko bypass karne ki koshish karegi
-        disableBeforeUnloadHandlers: true,
-        doNotStoreRoom: true,
-        startWithAudioMuted: false,
-        startWithVideoMuted: false,
-        // Isse Jitsi ko lagega ki aapne already authenticate kar liya hai
-        hosts: {
-            domain: '8x8.vc',
-            muc: 'conference.8x8.vc'
-        }
-      },
+  prejoinPageEnabled: false,
+  disableSelfView: false,
+  // Ye mobile audio fix ke liye zaroori hain
+  startWithAudioMuted: false,
+  enableNoAudioDetection: true,
+  enableNoVideoDetection: true,
+  disableAudioLevels: false,
+  // Hardware integration
+  constraints: {
+    video: {
+      height: { ideal: 720, max: 720, min: 240 }
+    }
+  },
+  // Mobile specific audio bridge
+  p2p: {
+    enabled: true // Mobile-to-mobile connectivity improve karta hai
+  }
+},
       interfaceConfigOverwrite: {
         TOOLBAR_BUTTONS: [
           'microphone', 'camera', 'chat', 'settings', 
