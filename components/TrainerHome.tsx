@@ -87,25 +87,32 @@ const TrainerHome: React.FC<TrainerHomeProps> = ({ user, onStartMeeting }) => {
   }, []);
 
 const startLiveClass = async (invites: string[], customId?: string) => {
-    // Safety check: invites hamesha array hona chahiye
+    // 1. Safety Check: Agar invites undefined ho toh empty array ban jaye
     const safeInvites = Array.isArray(invites) ? invites : [];
+    
+    // 2. Safety Check: Trainer name khali nahi hona chahiye
+    const trainerName = user?.name || "Trainer";
     
     const uniqueId = customId || `BPStudio${Date.now()}${Math.random().toString(36).slice(2, 5)}`;
     
     const classData = {
       meetingId: uniqueId,
       status: 'live',
-      trainerName: user.name || 'Trainer',
+      trainerName: trainerName,
       startTime: Date.now(),
-      invitedUids: safeInvites // No more undefined
+      invitedUids: safeInvites
     };
 
+    console.log("Attempting to sync with Firebase...", classData);
+
     try {
+      // Path check: 'active_class' node exist karna chahiye
       await set(ref(db, 'active_class'), classData);
+      console.log("Firebase Sync Success!");
       onStartMeeting(uniqueId);
-    } catch (e) {
-      console.error("Firebase Sync Error:", e);
-      alert("Firebase update failed! Check internet or console.");
+    } catch (e: any) {
+      console.error("Firebase Detailed Error:", e);
+      alert(`Update Failed: ${e.message}`);
     }
   };
   
