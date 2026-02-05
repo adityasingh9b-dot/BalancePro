@@ -317,100 +317,114 @@ return (
         ))}
       </div>
 
-      {/* LIVE VIEW */}
-      {view === 'classes' && (
-        <div className="grid gap-6 md:grid-cols-2 animate-in fade-in">
-           <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-8 shadow-xl">
-              <h3 className="text-zinc-500 text-[10px] font-black uppercase mb-8 tracking-[0.2em]">Studio Launch</h3>
-              {isLive ? (
-                 <div className="space-y-4">
-                    <div className="p-10 bg-lime-400/5 border border-lime-400/20 rounded-[24px] text-center animate-pulse"><p className="text-lime-400 font-black uppercase tracking-widest text-xs">Studio is Live</p></div>
-                    
-                    <button 
-                      onClick={() => activeClassData && onStartMeeting(activeClassData.meetingId)} 
-                      className="w-full bg-lime-400 text-zinc-950 py-5 rounded-2xl font-black uppercase text-xs shadow-xl shadow-lime-400/20"
-                    >
-                      Enter Active Session
-                    </button>
-                    
-                    {/* FIXED: End session now clears the live status for everyone */}
-                    <button onClick={() => remove(ref(db, 'active_class'))} className="w-full border border-zinc-800 text-zinc-500 py-5 rounded-2xl font-black text-xs hover:bg-red-500/10 hover:text-red-500 transition-colors">
-                      End Session & Close Studio
-                    </button>
-                 </div>
-              ) : (
-                <div className="space-y-6">
-                   <div className="max-h-60 overflow-y-auto bg-zinc-950/50 rounded-2xl p-2 border border-zinc-800">
-                      {clients.map(c => (
-                        <label key={c.uid} className="flex items-center gap-4 p-4 hover:bg-zinc-800 rounded-xl cursor-pointer">
-                          <input type="checkbox" checked={selectedInvites.includes(c.uid)} onChange={() => setSelectedInvites(prev => prev.includes(c.uid) ? prev.filter(i=>i!==c.uid) : [...prev, c.uid])} className="accent-lime-400 w-5 h-5 rounded-lg" />
-                          <span className="text-sm font-bold text-white uppercase italic">{c.name}</span>
-                        </label>
-                      ))}
-                   </div>
-                   <button onClick={() => startLiveClass(selectedInvites)} className="w-full bg-lime-400 text-zinc-950 py-6 rounded-3xl font-black text-xl italic uppercase shadow-2xl shadow-lime-400/10 active:scale-95 transition-all">Go Live Now</button>
-                </div>
-              )}
-           </div>
-
-           <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-8 flex flex-col h-[600px] shadow-xl">
-             <div className="flex justify-between items-center mb-8">
-                <h3 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">Upcoming</h3>
-                <button onClick={() => setShowScheduleForm(true)} className="text-lime-400 text-[10px] font-black uppercase tracking-widest bg-lime-400/10 px-4 py-2 rounded-full border border-lime-400/20">+ Schedule</button>
-             </div>
-             {showScheduleForm ? (
-                <form onSubmit={handleScheduleSubmit} className="space-y-4">
-                   <input value={schedTitle} onChange={e => setSchedTitle(e.target.value)} placeholder="Session Title" className="w-full bg-zinc-800 border border-zinc-700 p-4 rounded-xl text-white outline-none font-bold" />
-                   <input type="datetime-local" value={schedTime} onChange={e => setSchedTime(e.target.value)} className="w-full bg-zinc-800 border border-zinc-700 p-4 rounded-xl text-white outline-none" />
-                   <div className="flex gap-2">
-                      <button type="button" onClick={() => setShowScheduleForm(false)} className="flex-1 text-[10px] font-black uppercase text-zinc-500">Cancel</button>
-                      <button type="submit" className="flex-1 bg-lime-400 text-zinc-950 py-3 rounded-xl text-[10px] font-black uppercase">Save</button>
-                   </div>
-                </form>
-             ) : (
-                <div className="space-y-4 overflow-y-auto">
-                   {schedules.map(item => (
-                     <div key={item.id} className="p-5 bg-zinc-800/40 rounded-[20px] border border-zinc-800 flex justify-between items-center group">
-                       <div>
-                         <span className="block font-black text-white italic uppercase">{item.title}</span>
-                         <span className="text-[10px] text-zinc-600 font-bold uppercase">{item.time}</span>
-                       </div>
-                       
-                       <div className="flex gap-2">
-                         {/* FIXED: Launch now correctly triggers startLiveClass with invited users */}
-<button 
-  onClick={() => {
-    // 1. Pehle check karo ki is schedule mein koi pre-selected members hain?
-    const preSelectedMembers = item.invitedUids || []; 
-    
-    if (preSelectedMembers.length === 0) {
-      alert("Is class ke liye koi member select nahi kiya gaya tha!");
-    }
-
-    // 2. startLiveClass ko ye list bhej do, ye turant Firebase 'active_class' update kar dega
-    // Jisse users ko invite chala jayega (unka status 'invited' ho jayega)
-    startLiveClass(preSelectedMembers, item.id);
-  }} 
-  className="bg-zinc-800 text-lime-400 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-lime-400/20 hover:bg-lime-400 hover:text-zinc-950 transition-all"
->
-  Launch & Invite
-</button>
-                         
-                         {/* NEW: Delete Button for Scheduled Classes */}
-                         <button 
-                           onClick={() => confirm('Delete schedule?') && remove(ref(db, `schedules/${item.id}`))} 
-                           className="bg-zinc-900 text-red-500 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-red-500/20 opacity-0 group-hover:opacity-100 transition-all"
-                         >
-                           Del
-                         </button>
-                       </div>
-                     </div>
-                   ))}
-                </div>
-             )}
-           </div>
+{/* LIVE VIEW */}
+{view === 'classes' && (
+  <div className="grid gap-6 md:grid-cols-2 animate-in fade-in">
+    {/* LEFT PANEL: DIRECT GO LIVE */}
+    <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-8 shadow-xl">
+      <h3 className="text-zinc-500 text-[10px] font-black uppercase mb-8 tracking-[0.2em]">Studio Launch</h3>
+      {isLive ? (
+        <div className="space-y-4">
+          <div className="p-10 bg-lime-400/5 border border-lime-400/20 rounded-[24px] text-center animate-pulse">
+            <p className="text-lime-400 font-black uppercase tracking-widest text-xs">Studio is Live</p>
+          </div>
+          <button 
+            onClick={() => activeClassData && onStartMeeting(activeClassData.meetingId)} 
+            className="w-full bg-lime-400 text-zinc-950 py-5 rounded-2xl font-black uppercase text-xs shadow-xl shadow-lime-400/20"
+          >
+            Enter Active Session
+          </button>
+          <button onClick={() => remove(ref(db, 'active_class'))} className="w-full border border-zinc-800 text-zinc-500 py-5 rounded-2xl font-black text-xs hover:bg-red-500/10 hover:text-red-500 transition-colors">
+            End Session & Close Studio
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest">Instant Invite:</p>
+          <div className="max-h-60 overflow-y-auto bg-zinc-950/50 rounded-2xl p-2 border border-zinc-800">
+            {clients.map(c => (
+              <label key={c.uid} className="flex items-center gap-4 p-4 hover:bg-zinc-800 rounded-xl cursor-pointer">
+                <input type="checkbox" checked={selectedInvites.includes(c.uid)} onChange={() => setSelectedInvites(prev => prev.includes(c.uid) ? prev.filter(i=>i!==c.uid) : [...prev, c.uid])} className="accent-lime-400 w-5 h-5 rounded-lg" />
+                <span className="text-sm font-bold text-white uppercase italic">{c.name}</span>
+              </label>
+            ))}
+          </div>
+          <button onClick={() => startLiveClass(selectedInvites)} className="w-full bg-lime-400 text-zinc-950 py-6 rounded-3xl font-black text-xl italic uppercase shadow-2xl shadow-lime-400/10 active:scale-95 transition-all">Go Live Now</button>
         </div>
       )}
+    </div>
+
+    {/* RIGHT PANEL: UPCOMING & SCHEDULE FORM */}
+    <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-8 flex flex-col h-[600px] shadow-xl">
+      <div className="flex justify-between items-center mb-8">
+        <h3 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">Upcoming</h3>
+        {!showScheduleForm && (
+          <button onClick={() => { setShowScheduleForm(true); setSelectedInvites([]); }} className="text-lime-400 text-[10px] font-black uppercase tracking-widest bg-lime-400/10 px-4 py-2 rounded-full border border-lime-400/20">+ Schedule</button>
+        )}
+      </div>
+
+      {showScheduleForm ? (
+        <form onSubmit={handleScheduleSubmit} className="space-y-4 overflow-y-auto pr-2">
+          <input value={schedTitle} onChange={e => setSchedTitle(e.target.value)} placeholder="Session Title" className="w-full bg-zinc-800 border border-zinc-700 p-4 rounded-xl text-white outline-none font-bold" />
+          <input type="datetime-local" value={schedTime} onChange={e => setSchedTime(e.target.value)} className="w-full bg-zinc-800 border border-zinc-700 p-4 rounded-xl text-white outline-none" />
+          
+          <div className="space-y-2">
+            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest ml-1">Pre-select Members:</p>
+            <div className="max-h-48 overflow-y-auto bg-zinc-950/50 rounded-2xl p-2 border border-zinc-800">
+              {clients.map(c => (
+                <label key={c.uid} className="flex items-center gap-3 p-3 hover:bg-zinc-800 rounded-xl cursor-pointer">
+                  <input type="checkbox" checked={selectedInvites.includes(c.uid)} onChange={() => setSelectedInvites(prev => prev.includes(c.uid) ? prev.filter(i=>i!==c.uid) : [...prev, c.uid])} className="accent-lime-400 w-4 h-4 rounded" />
+                  <span className="text-[11px] font-bold text-zinc-300 uppercase italic">{c.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={() => { setShowScheduleForm(false); setSelectedInvites([]); }} className="flex-1 text-[10px] font-black uppercase text-zinc-500">Cancel</button>
+            <button type="submit" className="flex-1 bg-lime-400 text-zinc-950 py-3 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-lime-400/10">Save Class</button>
+          </div>
+        </form>
+      ) : (
+        <div className="space-y-4 overflow-y-auto">
+          {schedules.map(item => (
+            <div key={item.id} className="p-5 bg-zinc-800/40 rounded-[20px] border border-zinc-800 flex justify-between items-center group">
+              <div>
+                <span className="block font-black text-white italic uppercase">{item.title}</span>
+                <span className="text-[10px] text-zinc-600 font-bold uppercase">{item.time}</span>
+                {item.invitedUids && (
+                  <span className="block text-[8px] text-lime-400/60 font-black uppercase mt-1">
+                    {item.invitedUids.length} Members Pre-selected
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => startLiveClass(item.invitedUids || [], item.id)} 
+                  className="bg-zinc-800 text-lime-400 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-lime-400/20 hover:bg-lime-400 hover:text-zinc-950 transition-all"
+                >
+                  Launch & Invite
+                </button>
+                <button 
+                  onClick={() => confirm('Delete schedule?') && remove(ref(db, `schedules/${item.id}`))} 
+                  className="bg-zinc-900 text-red-500 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-red-500/20 opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  Del
+                </button>
+              </div>
+            </div>
+          ))}
+          {schedules.length === 0 && (
+            <div className="flex-1 flex flex-col items-center justify-center opacity-20 py-20">
+              <p className="text-[10px] font-black uppercase tracking-widest">No Scheduled Classes</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
+)}
 
       {/* DIET VIEW */}
       {view === 'clients' && (
