@@ -86,30 +86,37 @@ const TrainerHome: React.FC<TrainerHomeProps> = ({ user, onStartMeeting }) => {
     });
   }, []);
 
-  // --- HANDLERS (Simplified & Fixed) ---
+const startLiveClass = async (invites: string[], customId?: string) => {
+    // Agar scheduled class hai toh uski ID use karo, warna naya banao
+    const uniqueId = customId || `BPStudio${Date.now()}${Math.random().toString(36).slice(2, 5)}`;
+    
+    const classData = {
+      meetingId: uniqueId,
+      status: 'live',
+      trainerName: user.name,
+      startTime: Date.now(),
+      invitedUids: invites || []
+    };
 
-// Is function ko apne TrainerHome.tsx mein replace karlo
-const startLiveClass = async (invites: string[]) => {
-  // ID simple rakho, Jitsi special characters se panga leta hai
-  const uniqueId = `BPStudio${Date.now()}${Math.random().toString(36).slice(2, 5)}`;
-  
-  const classData = {
-    meetingId: uniqueId,
-    status: 'live',
-    trainerName: user.name,
-    startTime: Date.now(),
-    invitedUids: invites
+    try {
+      // Path 'active_class' hi rakha hai jo tere useEffect mein hai
+      await set(ref(db, 'active_class'), classData);
+      onStartMeeting(uniqueId);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to update Firebase. Path check karein.");
+    }
   };
-
-  try {
-    // Firebase update
-    await set(ref(db, 'active_class'), classData);
-    // Component switch
-    onStartMeeting(uniqueId);
-  } catch (e) {
-    alert("Firebase update failed!");
-  }
-};
+  
+  const handleDeleteSchedule = async (schedId: string) => {
+    if (confirm("Bhai, ye scheduled class uda du?")) {
+      try {
+        await remove(ref(db, `schedules/${schedId}`));
+      } catch (e) {
+        alert("Delete failed!");
+      }
+    }
+  };
 
   const handleAddVideo = async () => {
     if (!activeCategoryId || !newVidTitle || !selectedFile) return;
@@ -293,21 +300,17 @@ return (
                  <div className="space-y-4">
                     <div className="p-10 bg-lime-400/5 border border-lime-400/20 rounded-[24px] text-center animate-pulse"><p className="text-lime-400 font-black uppercase tracking-widest text-xs">Studio is Live</p></div>
                     
+                    <button 
+                      onClick={() => activeClassData && onStartMeeting(activeClassData.meetingId)} 
+                      className="w-full bg-lime-400 text-zinc-950 py-5 rounded-2xl font-black uppercase text-xs shadow-xl shadow-lime-400/20"
+                    >
+                      Enter Active Session
+                    </button>
                     
-
-<button 
-      onClick={() => activeClassData && onStartMeeting(activeClassData.meetingId)} 
-      className="w-full bg-lime-400 text-zinc-950 py-5 rounded-2xl font-black uppercase text-xs shadow-xl shadow-lime-400/20"
-    >
-      Enter Active Session
-    </button>
-    
-    <button onClick={() => remove(ref(db, 'active_class'))} className="w-full border border-zinc-800 text-zinc-500 py-5 rounded-2xl font-black text-xs">
-      End Session
-    </button>
-
-
-
+                    {/* FIXED: End session now clears the live status for everyone */}
+                    <button onClick={() => remove(ref(db, 'active_class'))} className="w-full border border-zinc-800 text-zinc-500 py-5 rounded-2xl font-black text-xs hover:bg-red-500/10 hover:text-red-500 transition-colors">
+                      End Session & Close Studio
+                    </button>
                  </div>
               ) : (
                 <div className="space-y-6">
@@ -341,9 +344,29 @@ return (
              ) : (
                 <div className="space-y-4 overflow-y-auto">
                    {schedules.map(item => (
-                     <div key={item.id} className="p-5 bg-zinc-800/40 rounded-[20px] border border-zinc-800 flex justify-between items-center">
-                       <div><span className="block font-black text-white italic uppercase">{item.title}</span><span className="text-[10px] text-zinc-600 font-bold uppercase">{item.time}</span></div>
-                       <button onClick={() => startLiveClass(item.invitedUids)} className="bg-zinc-800 text-lime-400 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-lime-400/20">Launch</button>
+                     <div key={item.id} className="p-5 bg-zinc-800/40 rounded-[20px] border border-zinc-800 flex justify-between items-center group">
+                       <div>
+                         <span className="block font-black text-white italic uppercase">{item.title}</span>
+                         <span className="text-[10px] text-zinc-600 font-bold uppercase">{item.time}</span>
+                       </div>
+                       
+                       <div className="flex gap-2">
+                         {/* FIXED: Launch now correctly triggers startLiveClass with invited users */}
+                         <button 
+                           onClick={() => startLiveClass(item.invitedUids || [])} 
+                           className="bg-zinc-800 text-lime-400 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-lime-400/20 hover:bg-lime-400 hover:text-zinc-950 transition-all"
+                         >
+                           Launch
+                         </button>
+                         
+                         {/* NEW: Delete Button for Scheduled Classes */}
+                         <button 
+                           onClick={() => confirm('Delete schedule?') && remove(ref(db, `schedules/${item.id}`))} 
+                           className="bg-zinc-900 text-red-500 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-red-500/20 opacity-0 group-hover:opacity-100 transition-all"
+                         >
+                           Del
+                         </button>
+                       </div>
                      </div>
                    ))}
                 </div>
@@ -421,7 +444,11 @@ return (
                         <div className="aspect-video bg-zinc-950 rounded-[20px] flex items-center justify-center relative mb-4">
                            <svg className="w-10 h-10 text-zinc-800 group-hover:text-lime-400 transition-all" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                            {/* FIXED: Firebase individual video delete */}
-                           <button onClick={() => handleDeleteVideo(vid.id)} className="absolute top-2 right-2 text-zinc-600 hover:text-red-500 p-2">✕</button>
+                           <button 
+  onClick={() => handleDeleteVideo(vid.id)} 
+  className="absolute top-2 right-2 bg-zinc-950/80 text-white hover:text-red-500 p-2 rounded-full backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
+>
+</button>
                         </div>
                         <span className="block font-black text-white text-base italic uppercase">{vid.title}</span>
                      </div>
