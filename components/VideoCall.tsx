@@ -24,8 +24,8 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
   const [invitedUids, setInvitedUids] = useState<string[]>([]);
   const [currentClassData, setCurrentClassData] = useState<ActiveClass | null>(null);
 
+  // Sync active class and clients for the invite modal
   useEffect(() => {
-    // Sync active class and clients for the invite modal
     const unsub = onValue(ref(db, 'active_class'), (snap) => {
       const data = snap.val();
       if (data) {
@@ -48,6 +48,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
     return () => unsub();
   }, [isTrainer]);
 
+  // Jitsi Lifecycle
   useEffect(() => {
     if (!containerRef.current || !window.JitsiMeetExternalAPI) return;
 
@@ -55,38 +56,36 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
       jitsiApiRef.current.dispose();
     }
 
-const domain = 'meet.ffmuc.net';
+    const domain = 'meet.ffmuc.net';
     
     const options = {
-      // FIX: Humne 'vpaas-magic-cookie' hata diya hai kyunki wo login maang raha hai.
-      // Hum direct community room use karenge lekin unique hash ke saath.
       roomName: `BalanceProStudio_${meetingId}`, 
       width: '100%',
       height: '100%',
       parentNode: containerRef.current,
+      configOverwrite: {
+        prejoinPageEnabled: false, 
+        startWithAudioMuted: false,
+        startWithVideoMuted: false,
+        iceTransportPolicy: 'all', 
+        disableDeepLinking: true, // Mobile app prompt ko rokne ke liye
+      },
+      interfaceConfigOverwrite: {
+        MOBILE_APP_PROMO: false,
+        TOOLBAR_BUTTONS: [
+          'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
+          'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
+          'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
+          'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
+          'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone',
+          'security'
+        ],
+      },
       userInfo: { 
         displayName: userName + (isTrainer ? ' (Coach)' : '') 
       },
-      
-const options = {
-    roomName: meetingId,
-    width: '100%',
-    height: '100%',
-    parentNode: document.querySelector('#jitsi-container'),
-    configOverwrite: {
-        prejoinPageEnabled: false, // Seedha meeting mein ghuso
-        startWithAudioMuted: false,
-        startWithVideoMuted: false,
-        iceTransportPolicy: 'all', // Connection fast karne ke liye
-    },
-    interfaceConfigOverwrite: {
-        // Mobile par buttons thode saaf dikhen
-        MOBILE_APP_PROMO: false, 
-    },
-    userInfo: {
-        displayName: userName
-    }
-};
+    };
+
     try {
       jitsiApiRef.current = new window.JitsiMeetExternalAPI(domain, options);
       
@@ -94,7 +93,6 @@ const options = {
         videoConferenceLeft: onLeave,
         readyToClose: onLeave
       });
-
     } catch (e) {
       console.error("Jitsi Load Error:", e);
     }
@@ -105,7 +103,7 @@ const options = {
         jitsiApiRef.current = null;
       }
     };
-  }, [meetingId]);
+  }, [meetingId, userName, isTrainer, onLeave]);
 
   const toggleInvite = async (uid: string) => {
     if (!currentClassData) return;
