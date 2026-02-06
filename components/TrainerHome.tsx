@@ -136,27 +136,40 @@ const startLiveClass = async (invites: string[], existingId?: string) => {
   
   
   
-  const pickVideoFile = async () => {
+const pickVideoFile = async () => {
   try {
     const result = await FilePicker.pickVideos({
       multiple: false,
-      readData: false, // Mobile par performance ke liye false rakho
+      readData: true, // Mobile ke liye isse TRUE rakho taaki data mil sake
     });
 
     if (result.files && result.files.length > 0) {
       const file = result.files[0];
       
-      // Capacitor file ko Web File object mein convert karna padta hai upload ke liye
-      const response = await fetch(file.path!);
-      const blob = await response.blob();
-      const webFile = new File([blob], file.name, { type: file.mimeType });
-      
-      setSelectedFile(webFile);
-      alert(`Selected: ${file.name}`);
+      // FIX: Agar file.data hai (base64), toh usse Blob mein convert karo
+      if (file.data) {
+        const byteCharacters = atob(file.data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const videoBlob = new Blob([byteArray], { type: file.mimeType });
+        
+        const webFile = new File([videoBlob], file.name, { type: file.mimeType });
+        setSelectedFile(webFile);
+        alert(`Video Selected: ${file.name}`);
+      } else {
+        // Fallback agar readData kaam nahi kiya (kuch OS version par)
+        const response = await fetch(file.webPath!); // webPath try karo localhost error se bachne ke liye
+        const blob = await response.blob();
+        const webFile = new File([blob], file.name, { type: file.mimeType });
+        setSelectedFile(webFile);
+      }
     }
   } catch (error) {
     console.error("Picker error:", error);
-    alert("Gallery open karne mein error aaya.");
+    alert("Gallery error: Permission issue ya file format unsupported.");
   }
 };
   
