@@ -196,7 +196,15 @@ const handlePlayVideo = (vidId: string) => {
               </div>
               <div className="aspect-video bg-black rounded-[40px] overflow-hidden border border-zinc-800 shadow-2xl relative">
                 {videoUrl ? (
-                  <video src={videoUrl} controls autoPlay loop className="w-full h-full object-contain" />
+                 <video 
+  src={videoUrl} 
+  controls 
+  autoPlay 
+  loop 
+  playsInline            // Android/iOS internal player ke liye mandatory
+  webkit-playsinline="true" 
+  className="w-full h-full object-contain" 
+/>
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                     <div className="w-8 h-8 border-2 border-lime-400 border-t-transparent rounded-full animate-spin"></div>
