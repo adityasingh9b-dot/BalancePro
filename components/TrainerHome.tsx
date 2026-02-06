@@ -4,6 +4,7 @@ import { db } from '../services/firebaseService';
 import { ref, set, onValue, remove } from 'firebase/database';
 import { storage } from '../services/firebaseService';
 import { ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { FilePicker } from '@capawesome/capacitor-file-picker';
 
 const meetingId = `BP_Studio_${Math.random().toString(36).substring(2, 9)}_${Date.now()}`;
 
@@ -131,28 +132,85 @@ const startLiveClass = async (invites: string[], existingId?: string) => {
       }
     }
   };
+  
+  
+  
+  
+  const pickVideoFile = async () => {
+  try {
+    const result = await FilePicker.pickVideos({
+      multiple: false,
+      readData: false, // Mobile par performance ke liye false rakho
+    });
 
-  const handleAddVideo = async () => {
-    if (!activeCategoryId || !newVidTitle || !selectedFile) return;
-    setIsSyncing(true);
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('upload_preset', UPLOAD_PRESET);
-    formData.append('resource_type', 'video');
-    try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/do7jfmqqf/video/upload`, { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.secure_url) {
-        const vidId = Date.now().toString();
-        await set(ref(db, `videos/${vidId}`), {
-          id: vidId, categoryId: activeCategoryId, title: newVidTitle, url: data.secure_url, addedOn: Date.now()
-        });
-        alert("Video Deployed!");
-        setNewVidTitle(''); setSelectedFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      }
-    } catch (e) { alert("Upload Failed!"); } finally { setIsSyncing(false); }
-  };
+    if (result.files && result.files.length > 0) {
+      const file = result.files[0];
+      
+      // Capacitor file ko Web File object mein convert karna padta hai upload ke liye
+      const response = await fetch(file.path!);
+      const blob = await response.blob();
+      const webFile = new File([blob], file.name, { type: file.mimeType });
+      
+      setSelectedFile(webFile);
+      alert(`Selected: ${file.name}`);
+    }
+  } catch (error) {
+    console.error("Picker error:", error);
+    alert("Gallery open karne mein error aaya.");
+  }
+};
+  
+  
+  
+const handleAddVideo = async () => {
+  if (!activeCategoryId || !newVidTitle || !selectedFile) {
+    alert("Sab details bharo bhai!");
+    return;
+  }
+  
+  setIsSyncing(true);
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+  formData.append('upload_preset', UPLOAD_PRESET);
+  // Optional: Folder name in Cloudinary
+  formData.append('folder', 'balancepro_vault');
+
+  try {
+    const res = await fetch(`https://api.cloudinary.com/v1_1/do7jfmqqf/video/upload`, { 
+      method: 'POST', 
+      body: formData 
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error?.message || "Cloudinary Upload Failed");
+    }
+
+    const data = await res.json();
+
+    // --- YAHAN FIX HAI: Database mein metadata save karna ---
+    if (data.secure_url) {
+      const vidId = Date.now().toString();
+      const videoEntry: VideoItem = {
+        id: vidId,
+        categoryId: activeCategoryId,
+        title: newVidTitle,
+        url: data.secure_url,
+        addedOn: Date.now()
+      };
+
+      await set(ref(db, `videos/${vidId}`), videoEntry);
+      
+      alert("Video Uploaded & Linked to Vault!");
+      setNewVidTitle('');
+      setSelectedFile(null);
+    }
+  } catch (e: any) { 
+    alert("Error: " + e.message);
+  } finally { 
+    setIsSyncing(false); 
+  }
+};
 
 
 const handleDeleteCategory = async (catId: string) => {
@@ -507,21 +565,24 @@ return (
                   className="hidden" 
                 />
                 
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`flex flex-col items-center justify-center border-2 border-dashed rounded-[24px] p-10 cursor-pointer transition-all ${
-                    selectedFile ? 'border-lime-400 bg-lime-400/5' : 'border-zinc-800 bg-zinc-800/20 hover:border-zinc-700'
-                  }`}
-                >
-                  <span className="text-xs font-black uppercase tracking-widest text-zinc-500">
-                    {selectedFile ? selectedFile.name : 'Select MP4 Drill'}
-                  </span>
-                  {selectedFile && (
-                    <span className="text-[9px] text-zinc-600 mt-1 uppercase">
-                      {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
-                    </span>
-                  )}
-                </div>
+               
+               <div 
+  onClick={pickVideoFile}
+  className={`flex flex-col items-center justify-center border-2 border-dashed rounded-[24px] p-10 cursor-pointer transition-all ${
+    selectedFile ? 'border-lime-400 bg-lime-400/5' : 'border-zinc-800 bg-zinc-800/20 hover:border-zinc-700'
+  }`}
+>
+  <span className="text-xs font-black uppercase tracking-widest text-zinc-500">
+    {selectedFile ? selectedFile.name : 'Select MP4 Drill (Native Picker)'}
+  </span>
+  {selectedFile && (
+    <span className="text-[9px] text-zinc-600 mt-1 uppercase">
+      Ready for deployment
+    </span>
+  )}
+</div>
+               
+               
               </div>
               <button onClick={handleAddVideo} disabled={isSyncing} className="w-full bg-lime-400 text-zinc-950 py-4 rounded-2xl font-black uppercase text-xs">
                 {isSyncing ? 'Processing...' : 'Deploy Video'}
