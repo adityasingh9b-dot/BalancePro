@@ -604,58 +604,22 @@ return (
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2">
-            {videos.filter(v => v.categoryId === activeCategoryId).map(vid => {
-  // Local state taaki sirf wahi video play ho jispar click kiya jaye
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  return (
-    <div key={vid.id} className="bg-zinc-800/30 border border-zinc-700/50 rounded-[32px] p-6 group hover:border-lime-400/30 transition-all">
-      <div 
-        className="aspect-video bg-zinc-950 rounded-[20px] flex items-center justify-center relative mb-4 overflow-hidden cursor-pointer"
-        onClick={() => setIsPlaying(!isPlaying)}
-      >
-        {isPlaying ? (
-          /* ACTUAL VIDEO PLAYER */
-          <video 
-            src={vid.url} 
-            className="w-full h-full object-contain" 
-            controls 
-            autoPlay 
-            playsInline // Mobile app ke liye mandatory
-            webkit-playsinline="true"
-          />
-        ) : (
-          /* PREVIEW STATE */
-          <>
-            {/* Background Thumbnail (Optional) */}
-            <video src={vid.url} className="absolute inset-0 w-full h-full object-cover opacity-20" muted />
-            
-            {/* Play Icon Overlay */}
-            <div className="z-10 bg-zinc-900/50 p-4 rounded-full backdrop-blur-sm group-hover:scale-110 transition-transform">
-              <svg className="w-10 h-10 text-lime-400 shadow-2xl" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
-            </div>
-          </>
-        )}
-
-        {/* Delete Button */}
-        <button 
-          onClick={(e) => { 
-            e.stopPropagation(); // Video play hone se roko delete par
-            handleDeleteVideo(vid.id); 
-          }} 
-          className="absolute top-2 right-2 bg-zinc-950/80 text-white hover:text-red-500 p-2 rounded-full backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-20"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      <span className="block font-black text-white text-base italic uppercase tracking-tight">{vid.title}</span>
-    </div>
-  );
-})}
+            {videos.filter(v => v.categoryId === activeCategoryId).map(vid => (
+              <div key={vid.id} className="bg-zinc-800/30 border border-zinc-700/50 rounded-[32px] p-6 group hover:border-lime-400/30 transition-all">
+                <div className="aspect-video bg-zinc-950 rounded-[20px] flex items-center justify-center relative mb-4">
+                  <svg className="w-10 h-10 text-zinc-800 group-hover:text-lime-400 transition-all" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <button 
+                    onClick={() => handleDeleteVideo(vid.id)} 
+                    className="absolute top-2 right-2 bg-zinc-950/80 text-white hover:text-red-500 p-2 rounded-full backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <span className="block font-black text-white text-base italic uppercase">{vid.title}</span>
+              </div>
+            ))}
           </div>
         </div>
       ) : (
