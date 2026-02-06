@@ -444,127 +444,118 @@ return (
 
 
 
+{/* DIET VIEW */}
+{view === 'clients' && (
+  <div className="bg-zinc-900 border border-zinc-800 rounded-[40px] p-12 max-w-2xl mx-auto shadow-2xl animate-in fade-in">
+    <h3 className="text-3xl font-black italic uppercase text-white mb-10 leading-none">Issue Prescription</h3>
+    <form onSubmit={handlePrescribe} className="space-y-8">
+      <select value={selectedClientForDiet} onChange={(e) => setSelectedClientForDiet(e.target.value)} className="w-full bg-zinc-800 border border-zinc-700 p-5 rounded-2xl text-white font-bold outline-none focus:border-lime-400">
+        <option value="">Select Member...</option>
+        {clients.map(c => <option key={c.uid} value={c.uid}>{c.name}</option>)}
+      </select>
+      <textarea value={nutrients} onChange={(e) => setNutrients(e.target.value)} placeholder="Nutrient Goals (Protein, Carbs, Fats...)" className="w-full bg-zinc-800 border border-zinc-700 p-6 rounded-3xl h-32 text-white font-medium outline-none focus:border-lime-400" />
+      <textarea value={meals} onChange={(e) => setMeals(e.target.value)} placeholder="Daily Meal Protocol..." className="w-full bg-zinc-800 border border-zinc-700 p-6 rounded-3xl h-32 text-white font-medium outline-none focus:border-lime-400" />
+      <button type="submit" className="w-full bg-lime-400 text-zinc-950 font-black py-6 rounded-[24px] text-xs uppercase tracking-widest shadow-2xl shadow-lime-400/20">Deliver Protocol</button>
+    </form>
+  </div>
+)}
 
-
-
-      {/* DIET VIEW */}
-      {view === 'clients' && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-[40px] p-12 max-w-2xl mx-auto shadow-2xl animate-in fade-in">
-          <h3 className="text-3xl font-black italic uppercase text-white mb-10 leading-none">Issue Prescription</h3>
-          <form onSubmit={handlePrescribe} className="space-y-8">
-            <select value={selectedClientForDiet} onChange={(e) => setSelectedClientForDiet(e.target.value)} className="w-full bg-zinc-800 border border-zinc-700 p-5 rounded-2xl text-white font-bold outline-none focus:border-lime-400">
-              <option value="">Select Member...</option>
-              {clients.map(c => <option key={c.uid} value={c.uid}>{c.name}</option>)}
-            </select>
-            <textarea value={nutrients} onChange={(e) => setNutrients(e.target.value)} placeholder="Nutrient Goals (Protein, Carbs, Fats...)" className="w-full bg-zinc-800 border border-zinc-700 p-6 rounded-3xl h-32 text-white font-medium outline-none focus:border-lime-400" />
-            <textarea value={meals} onChange={(e) => setMeals(e.target.value)} placeholder="Daily Meal Protocol..." className="w-full bg-zinc-800 border border-zinc-700 p-6 rounded-3xl h-32 text-white font-medium outline-none focus:border-lime-400" />
-            <button type="submit" className="w-full bg-lime-400 text-zinc-950 font-black py-6 rounded-[24px] text-xs uppercase tracking-widest shadow-2xl shadow-lime-400/20">Deliver Protocol</button>
-          </form>
-        </div>
-      )}
-
-      {/* VAULT VIEW */}
-      {view === 'media' && (
-        <div className="grid gap-6 md:grid-cols-[300px_1fr] animate-in fade-in">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-8 h-fit shadow-xl">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-white font-black text-[10px] uppercase tracking-[0.2em]">Folders</h3>
-              <button onClick={() => { setIsAddingCategory(true); setTimeout(() => catInputRef.current?.focus(), 100); }} className="bg-lime-400 text-zinc-950 w-8 h-8 rounded-full font-black text-xl hover:scale-110 active:scale-95 transition-transform">+</button>
-            </div>
-            <div className="space-y-3">
-              {isAddingCategory && (
-                <div className="space-y-2 mb-4 p-4 bg-zinc-800/50 rounded-2xl">
-                  <input ref={catInputRef} value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="Name" className="w-full bg-zinc-800 border-2 border-lime-400/50 p-3 rounded-xl text-white text-xs outline-none font-bold" />
-                  <div className="flex gap-2">
-                    <button onClick={() => setIsAddingCategory(false)} className="flex-1 text-[9px] font-black uppercase text-zinc-500">✕</button>
-                    <button onClick={handleAddCategory} className="flex-1 bg-lime-400 text-zinc-950 py-2 rounded-xl text-[9px] font-black uppercase">Add</button>
-                  </div>
-                </div>
-              )}
-              {categories.map((cat) => (
-                <div key={cat.id} onClick={() => setActiveCategoryId(cat.id)} className={`flex items-center justify-between p-4 rounded-[20px] cursor-pointer transition-all ${activeCategoryId === cat.id ? 'bg-lime-400 text-zinc-950 shadow-lg' : 'bg-zinc-800/30 text-zinc-500 hover:bg-zinc-800'}`}>
-                  <span className="text-sm font-black uppercase italic">{cat.name}</span>
-                  {/* FIXED: Firebase delete with ID */}
-                  <button onClick={(e) => { e.stopPropagation(); if(confirm('Delete folder?')) remove(ref(db, `video_categories/${cat.id}`)); }} className="text-xs opacity-30 hover:opacity-100 p-1">✕</button>
-                </div>
-              ))}
+{/* VAULT VIEW */}
+{view === 'media' && (
+  <div className="grid gap-6 md:grid-cols-[300px_1fr] animate-in fade-in">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-8 h-fit shadow-xl">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-white font-black text-[10px] uppercase tracking-[0.2em]">Folders</h3>
+        <button onClick={() => { setIsAddingCategory(true); setTimeout(() => catInputRef.current?.focus(), 100); }} className="bg-lime-400 text-zinc-950 w-8 h-8 rounded-full font-black text-xl hover:scale-110 active:scale-95 transition-transform">+</button>
+      </div>
+      <div className="space-y-3">
+        {isAddingCategory && (
+          <div className="space-y-2 mb-4 p-4 bg-zinc-800/50 rounded-2xl">
+            <input ref={catInputRef} value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="Name" className="w-full bg-zinc-800 border-2 border-lime-400/50 p-3 rounded-xl text-white text-xs outline-none font-bold" />
+            <div className="flex gap-2">
+              <button onClick={() => setIsAddingCategory(false)} className="flex-1 text-[9px] font-black uppercase text-zinc-500">✕</button>
+              <button onClick={handleAddCategory} className="flex-1 bg-lime-400 text-zinc-950 py-2 rounded-xl text-[9px] font-black uppercase">Add</button>
             </div>
           </div>
+        )}
+        {categories.map((cat) => (
+          <div key={cat.id} onClick={() => setActiveCategoryId(cat.id)} className={`flex items-center justify-between p-4 rounded-[20px] cursor-pointer transition-all ${activeCategoryId === cat.id ? 'bg-lime-400 text-zinc-950 shadow-lg' : 'bg-zinc-800/30 text-zinc-500 hover:bg-zinc-800'}`}>
+            <span className="text-sm font-black uppercase italic">{cat.name}</span>
+            <button onClick={(e) => { e.stopPropagation(); if(confirm('Delete folder?')) remove(ref(db, `video_categories/${cat.id}`)); }} className="text-xs opacity-30 hover:opacity-100 p-1">✕</button>
+          </div>
+        ))}
+      </div>
+    </div>
 
-          <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-10 min-h-[600px] shadow-xl">
-            {activeCategoryId ? (
-              <div className="space-y-10">
-                <div className="p-8 bg-zinc-950/50 rounded-[32px] border border-zinc-800">
-                   <h3 className="text-white font-black text-[10px] uppercase tracking-[0.2em] mb-6">Publish MP4 Drill</h3>
-                   <div className="grid gap-6">
-                      <input value={newVidTitle} onChange={e => setNewVidTitle(e.target.value)} placeholder="Exercise Name" className="w-full bg-zinc-800 border border-zinc-700 px-6 py-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-lime-400" />
+    <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-10 min-h-[600px] shadow-xl">
+      {activeCategoryId ? (
+        <div className="space-y-10">
+          <div className="p-8 bg-zinc-950/50 rounded-[32px] border border-zinc-800">
+            <h3 className="text-white font-black text-[10px] uppercase tracking-[0.2em] mb-6">Publish MP4 Drill</h3>
+            <div className="grid gap-6">
+              <input value={newVidTitle} onChange={e => setNewVidTitle(e.target.value)} placeholder="Exercise Name" className="w-full bg-zinc-800 border border-zinc-700 px-6 py-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-lime-400" />
 
-
-
-
-
-<div className="relative group">
-  <input 
-    ref={fileInputRef} 
-    type="file" 
-    accept="video/*" 
-    onChange={e => {
-      const file = e.target.files?.[0];
-      if (file) setSelectedFile(file);
-    }} 
-    className="hidden" 
-  />
-  
-  <div 
-    onClick={() => fileInputRef.current?.click()}
-    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-[24px] p-10 cursor-pointer transition-all ${
-      selectedFile ? 'border-lime-400 bg-lime-400/5' : 'border-zinc-800 bg-zinc-800/20 hover:border-zinc-700'
-    }`}
-  >
-    <span className="text-xs font-black uppercase tracking-widest text-zinc-500">
-      {selectedFile ? selectedFile.name : 'Select MP4 Drill'}
-    </span>
-    {selectedFile && (
-      <span className="text-[9px] text-zinc-600 mt-1 uppercase">
-        {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
-      </span>
-    )}
-  </div>
-</div>
-
-
-
-
-
-
-                <div className="grid gap-6 sm:grid-cols-2">
-                   {videos.filter(v => v.categoryId === activeCategoryId).map(vid => (
-                     <div key={vid.id} className="bg-zinc-800/30 border border-zinc-700/50 rounded-[32px] p-6 group hover:border-lime-400/30 transition-all">
-                        <div className="aspect-video bg-zinc-950 rounded-[20px] flex items-center justify-center relative mb-4">
-                           <svg className="w-10 h-10 text-zinc-800 group-hover:text-lime-400 transition-all" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                           {/* FIXED: Firebase individual video delete */}
-                           
-// Isko replace karein (Vault View mein):
-<button 
-  onClick={() => handleDeleteVideo(vid.id)} 
-  className="absolute top-2 right-2 bg-zinc-950/80 text-white hover:text-red-500 p-2 rounded-full backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
->
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>
-</button>
-                        </div>
-                        <span className="block font-black text-white text-base italic uppercase">{vid.title}</span>
-                     </div>
-                   ))}
+              <div className="relative group">
+                <input 
+                  ref={fileInputRef} 
+                  type="file" 
+                  accept="video/*" 
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) setSelectedFile(file);
+                  }} 
+                  className="hidden" 
+                />
+                
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`flex flex-col items-center justify-center border-2 border-dashed rounded-[24px] p-10 cursor-pointer transition-all ${
+                    selectedFile ? 'border-lime-400 bg-lime-400/5' : 'border-zinc-800 bg-zinc-800/20 hover:border-zinc-700'
+                  }`}
+                >
+                  <span className="text-xs font-black uppercase tracking-widest text-zinc-500">
+                    {selectedFile ? selectedFile.name : 'Select MP4 Drill'}
+                  </span>
+                  {selectedFile && (
+                    <span className="text-[9px] text-zinc-600 mt-1 uppercase">
+                      {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
+                    </span>
+                  )}
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center justify-center h-full text-zinc-700 font-black uppercase text-[10px] tracking-widest">Select Folder to Manage Vault</div>
-            )}
+              <button onClick={handleAddVideo} disabled={isSyncing} className="w-full bg-lime-400 text-zinc-950 py-4 rounded-2xl font-black uppercase text-xs">
+                {isSyncing ? 'Processing...' : 'Deploy Video'}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            {videos.filter(v => v.categoryId === activeCategoryId).map(vid => (
+              <div key={vid.id} className="bg-zinc-800/30 border border-zinc-700/50 rounded-[32px] p-6 group hover:border-lime-400/30 transition-all">
+                <div className="aspect-video bg-zinc-950 rounded-[20px] flex items-center justify-center relative mb-4">
+                  <svg className="w-10 h-10 text-zinc-800 group-hover:text-lime-400 transition-all" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <button 
+                    onClick={() => handleDeleteVideo(vid.id)} 
+                    className="absolute top-2 right-2 bg-zinc-950/80 text-white hover:text-red-500 p-2 rounded-full backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <span className="block font-black text-white text-base italic uppercase">{vid.title}</span>
+              </div>
+            ))}
           </div>
         </div>
+      ) : (
+        <div className="flex items-center justify-center h-full text-zinc-700 font-black uppercase text-[10px] tracking-widest">Select Folder to Manage Vault</div>
       )}
+    </div>
+  </div>
+)}
+
+
 
       {/* CRM VIEW */}
       {view === 'management' && (
