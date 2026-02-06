@@ -236,6 +236,7 @@ const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   } finally {
     setIsSyncing(false);
   }
+e.target.value = '';
 };
 
   const handleRegisterMember = async (e: React.FormEvent) => {
@@ -498,11 +499,40 @@ return (
                    <div className="grid gap-6">
                       <input value={newVidTitle} onChange={e => setNewVidTitle(e.target.value)} placeholder="Exercise Name" className="w-full bg-zinc-800 border border-zinc-700 px-6 py-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-lime-400" />
                       <div className="relative group">
-                        <input ref={fileInputRef} type="file" accept="video/mp4" onChange={e => setSelectedFile(e.target.files?.[0] || null)} className="hidden" id="mp4-upload" />
-                        <label htmlFor="mp4-upload" className={`flex flex-col items-center justify-center border-2 border-dashed rounded-[24px] p-10 cursor-pointer transition-all ${selectedFile ? 'border-lime-400 bg-lime-400/5' : 'border-zinc-800 bg-zinc-800/20 hover:border-zinc-700'}`}>
-                          <span className="text-xs font-black uppercase tracking-widest text-zinc-500">{selectedFile ? selectedFile.name : 'Select MP4 Drill'}</span>
-                          {selectedFile && <span className="text-[9px] text-zinc-600 mt-1 uppercase">{(selectedFile.size / (1024*1024)).toFixed(1)} MB</span>}
-                        </label>
+                        
+                        <input 
+  ref={fileInputRef} 
+  type="file" 
+  accept="video/*" // Sabhi video formats allow karein gallery trigger karne ke liye
+  onChange={e => {
+    const file = e.target.files?.[0];
+    if (file) setSelectedFile(file);
+  }} 
+  className="hidden" 
+  id="mp4-upload" 
+/>
+                        
+                       
+                       <label 
+  htmlFor="mp4-upload" 
+  onClick={(e) => {
+    // Ye line Android par gallery kholne mein help karegi
+    fileInputRef.current?.click();
+  }}
+  className={`flex flex-col items-center justify-center border-2 border-dashed rounded-[24px] p-10 cursor-pointer transition-all ${selectedFile ? 'border-lime-400 bg-lime-400/5' : 'border-zinc-800 bg-zinc-800/20 hover:border-zinc-700'}`}
+>
+  <span className="text-xs font-black uppercase tracking-widest text-zinc-500">
+    {selectedFile ? selectedFile.name : 'Select MP4 Drill'}
+  </span>
+  {selectedFile && (
+    <span className="text-[9px] text-zinc-600 mt-1 uppercase">
+      {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
+    </span>
+  )}
+</label>
+                       
+                       
+                       
                       </div>
                       <button onClick={handleAddVideo} disabled={isSyncing || !selectedFile || !newVidTitle} className={`w-full bg-lime-400 text-zinc-950 py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl active:scale-95 transition-all disabled:opacity-50`}>
                         {isSyncing ? 'Syncing to Lab...' : 'Deploy to Vault'}
@@ -515,10 +545,15 @@ return (
                         <div className="aspect-video bg-zinc-950 rounded-[20px] flex items-center justify-center relative mb-4">
                            <svg className="w-10 h-10 text-zinc-800 group-hover:text-lime-400 transition-all" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                            {/* FIXED: Firebase individual video delete */}
-                           <button 
+                           
+// Isko replace karein (Vault View mein):
+<button 
   onClick={() => handleDeleteVideo(vid.id)} 
   className="absolute top-2 right-2 bg-zinc-950/80 text-white hover:text-red-500 p-2 rounded-full backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
 >
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  </svg>
 </button>
                         </div>
                         <span className="block font-black text-white text-base italic uppercase">{vid.title}</span>

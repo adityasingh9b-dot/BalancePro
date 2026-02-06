@@ -149,9 +149,9 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   };
 
   useEffect(() => {
-    const interval = setInterval(analyzeFrame, 6000);
-    return () => clearInterval(interval);
-  }, [isSpeaking, isMuted]);
+  const interval = setInterval(analyzeFrame, 12000); // 12 seconds
+  return () => clearInterval(interval);
+}, [isSpeaking, isMuted]);
 
   return (
     <div className="fixed inset-0 bg-zinc-950 z-50 flex flex-col p-6 overflow-hidden">
