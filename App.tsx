@@ -48,7 +48,6 @@ const App: React.FC = () => {
     setMeetingMode({ id: '', active: false });
   }, []);
 
-  // LOADING STATE: Lime green hatakar Brand Orange aur Navy Blue kiya
   if (auth.loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-brand-light">
@@ -77,29 +76,45 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-brand-light flex flex-col">
-      {/* HEADER: Lime green span ko Orange kiya aur background ko Navy */}
-      <header className="px-6 py-4 flex justify-between items-center border-b border-brand-grey/20 bg-white shadow-sm">
-        <div className="flex items-center gap-2">
-          {/* Logo Icon matching the circular logo feel */}
-          <div className="w-8 h-8 bg-brand-navy rounded-full flex items-center justify-center text-white font-bold">B</div>
-          <h1 className="text-xl font-bold tracking-tight text-brand-navy">
-            Balance<span className="text-brand-orange">Pro</span>
-          </h1>
+      {/* HEADER: Compact & Maroon */}
+      <header className="px-6 py-3 flex justify-between items-center border-b border-black/20 bg-[#800000] shadow-md z-10">
+        <div className="flex items-center">
+          <div className="h-9 md:h-11 flex items-center">
+            <img 
+              src="/assets/logo1.jpeg" 
+              alt="BalancePro" 
+              className="h-full w-auto object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const parent = e.currentTarget.parentElement;
+                if (parent) {
+                  parent.innerHTML = `
+                    <div class="flex items-center gap-2">
+                      <div class="w-7 h-7 bg-white rounded-full flex items-center justify-center text-[#800000] font-bold text-[10px]">B</div>
+                      <h1 class="text-lg font-bold tracking-tight text-white">Balance<span class="text-[#FFB800]">Pro</span></h1>
+                    </div>
+                  `;
+                }
+              }}
+            />
+          </div>
         </div>
+
         <div className="flex items-center gap-4">
-          <span className="text-sm text-brand-navy/60 hidden sm:inline uppercase font-bold tracking-widest text-[10px]">
-            Session: {auth.user.name}
+          <span className="text-[10px] text-white/80 hidden sm:inline uppercase font-black tracking-widest">
+            NAME: {auth.user.name}
           </span>
           <button 
             onClick={handleLogout}
-            className="text-[10px] uppercase font-bold tracking-widest text-brand-red hover:bg-brand-red hover:text-white transition-all border border-brand-red/30 px-3 py-1 rounded-lg"
+            className="text-[9px] uppercase font-bold tracking-widest text-white hover:bg-white hover:text-[#800000] transition-all border border-white/30 px-2 py-1 rounded-md"
           >
             Logout
           </button>
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto">
+      {/* MAIN CONTENT AREA: Naturally flows */}
+      <main className="flex-1">
         {auth.user.role === UserRole.TRAINER ? (
           <TrainerHome user={auth.user} onStartMeeting={startMeeting} />
         ) : (
@@ -107,8 +122,11 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="p-4 text-center text-brand-navy/40 text-[10px] uppercase tracking-widest font-bold">
-        &copy; 2026 BalancePro &bull; Wellness Studio
+      {/* FOOTER: Slim & Clean */}
+      <footer className="py-2 text-center bg-[#800000] border-t border-black/20">
+        <p className="text-white/50 text-[9px] uppercase tracking-[0.2em] font-bold">
+          &copy; 2026 <span className="text-[#FFB800]">BalancePro</span> &bull; Wellness Studio
+        </p>
       </footer>
     </div>
   );

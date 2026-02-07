@@ -1,10 +1,41 @@
 @import "tailwindcss";
 
-/* Custom Scrollbar for BalancePro Theme */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #04152d; }
-::-webkit-scrollbar-thumb { background: #ea580c; border-radius: 10px; }
+/* 1. Global Reset - Pure UI ke peeche ka white hatane ke liye */
+:root {
+  background-color: #040814 !important;
+  color-scheme: dark; /* Browser elements ko bhi dark rakhega */
+  --ion-color-primary: #0b3161 !important;
+}
 
+html, body {
+  background-color: #040814 !important;
+  color: #f9fafb; /* Default text light rakhein */
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  width: 100%;
+  /* Yahan se wo purani @apply bg-brand-light line hata di hai */
+}
+
+/* 2. Custom Scrollbar - BalancePro Gold & Navy Theme */
+::-webkit-scrollbar { 
+  width: 6px; 
+}
+
+::-webkit-scrollbar-track { 
+  background: #040814; 
+}
+
+::-webkit-scrollbar-thumb { 
+  background: #FFB800; /* Gold thumb for visibility */
+  border-radius: 10px; 
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ea580c; /* Orange on hover */
+}
+
+/* 3. Specialized Scrollbar Class */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
 }
@@ -19,18 +50,10 @@
   background: #FFB800;
 }
 
+/* 4. Theme Variables */
 @theme {
-  /* Yahan humne tere colors define kar diye jo body mein use ho rahe hain */
-  --color-brand-light: #f9fafb;
+  --color-brand-dark: #040814;
   --color-brand-navy: #0A192F;
   --color-brand-orange: #FF8C00;
-}
-
-:root {
-  --ion-color-primary: #0b3161 !important;
-}
-
-body {
-  /* Ab Tailwind ko pata hai ki brand-light kya hai */
-  @apply bg-brand-light text-brand-navy;
+  --color-brand-gold: #FFB800;
 }
