@@ -801,11 +801,11 @@ return (
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Registry Empty</p>
           </div>
         )}
-      </div>
+      </div> 
     </div>
   </div>
 )}
+      </div> {/* Ye wala tune miss kar diya tha */}
     </div>
   );
 };
-export default TrainerHome;
