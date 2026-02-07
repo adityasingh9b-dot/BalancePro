@@ -44,8 +44,46 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     window.speechSynthesis.speak(utterance);
   };
 
-  // 2. Mic / Voice Chat Logic
-  const startVoiceChat = () => {
+
+const analyzeFrame = async () => {
+    if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
+    
+    const key = "AIzaSyAB-pB0-IZCG8yy97cki62UVXqMY7uPe_Y";
+    setIsAnalyzing(true);
+
+    const ctx = canvasRef.current.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(videoRef.current, 0, 0, 400, 300);
+    const base64Image = canvasRef.current.toDataURL('image/jpeg').split(',')[1];
+
+    try {
+      // Direct Fetch call to Gemini API
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: "Act as a fitness coach. Analyze this image. Give a 1-sentence correction or high-energy confirmation. Max 12 words." },
+              { inlineData: { mimeType: "image/jpeg", data: base64Image } }
+            ]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.candidates[0].content.parts[0].text || "Keep pushing, you're doing great!";
+      setFeedback(text);
+      speak(text);
+    } catch (err) {
+      console.error("Fetch Error:", err);
+      setFeedback("Coach Nitesh: Network issue, keep going!");
+    } finally {
+      setIsAnalyzing(false);
+    }
+};
+
+const startVoiceChat = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return alert("Mic not supported");
 
@@ -53,63 +91,26 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
 
-
-recognition.onresult = async (event: any) => {
-  const msg = event.results[0][0].transcript;
-  const key = "AIzaSyAB-pB0-IZCG8yy97cki62UVXqMY7uPe_Y"; 
-  
-  setFeedback(`You: ${msg}`);
-  
-  try {
-    const genAI = new GoogleGenAI(key); 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent(`User says: ${msg}. Reply as Coach Nitesh in 1 sentence.`);
-    const reply = result.response.text();
-    setFeedback(reply);
-    speak(reply);
-  } catch (e) { 
-    console.error("Mic AI Error:", e); 
-  }
-};
-
+    recognition.onresult = async (event: any) => {
+      const msg = event.results[0][0].transcript;
+      const key = "AIzaSyAB-pB0-IZCG8yy97cki62UVXqMY7uPe_Y";
+      setFeedback(`You: ${msg}`);
+      
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `User says: ${msg}. Reply as Coach Nitesh in 1 short sentence.` }] }]
+          })
+        });
+        const data = await response.json();
+        const reply = data.candidates[0].content.parts[0].text;
+        setFeedback(reply);
+        speak(reply);
+      } catch (e) { console.error("Mic Fetch Error:", e); }
+    };
     recognition.start();
-  };
-
-const analyzeFrame = async () => {
-    if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
-    
-    // 1. Direct Hardcoded Key
-    const MY_KEY = "AIzaSyAB-pB0-IZCG8yy97cki62UVXqMY7uPe_Y";
-    console.log("LOG: Coach Nitesh Version 3.0 - Key Length:", MY_KEY.length);
-
-    setIsAnalyzing(true);
-    const ctx = canvasRef.current.getContext('2d');
-    if (!ctx) return;
-
-    ctx.drawImage(videoRef.current, 0, 0, 400, 300);
-    const base64Image = canvasRef.current.toDataURL('image/jpeg').split(',')[1];
-
-    try {
-      // 2. Initializing INSIDE the try block with the hardcoded string
-      const genAI = new GoogleGenAI(MY_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      
-      const result = await model.generateContent([
-        { inlineData: { mimeType: 'image/jpeg', data: base64Image } },
-        { text: "Act as a fitness coach. Analyze this image. Give a 1-sentence correction or high-energy confirmation. Max 12 words." }
-      ]);
-      
-      const response = await result.response;
-      const text = response.text();
-      setFeedback(text);
-      speak(text);
-    } catch (err: any) {
-      console.error("Gemini SDK Error:", err);
-      // Agar yahan bhi API Key error aata hai, toh humein fetch method use karna padega
-      setFeedback("Coach Nitesh: AI is warming up...");
-    } finally {
-      setIsAnalyzing(false);
-    }
 };
   useEffect(() => {
   const interval = setInterval(analyzeFrame, 15000);
