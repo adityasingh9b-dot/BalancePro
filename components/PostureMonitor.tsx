@@ -76,6 +76,7 @@ recognition.onresult = async (event: any) => {
   };
 
 const analyzeFrame = async () => {
+console.log("LOG: Coach Nitesh Version 2.0 - Running with Hardcoded Key");
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
     
     // DIRECT KEY (Brahmastra)
