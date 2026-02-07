@@ -809,3 +809,4 @@ return (
     </div>
   );
 };
+export default TrainerHome;
