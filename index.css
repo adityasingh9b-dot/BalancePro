@@ -1,11 +1,17 @@
 @import "tailwindcss";
-@tailwind components;
-@tailwind utilities;
+
+@theme {
+  /* Yahan humne tere colors define kar diye jo body mein use ho rahe hain */
+  --color-brand-light: #f9fafb;
+  --color-brand-navy: #0A192F;
+  --color-brand-orange: #FF8C00;
+}
 
 :root {
   --ion-color-primary: #0b3161 !important;
 }
 
 body {
+  /* Ab Tailwind ko pata hai ki brand-light kya hai */
   @apply bg-brand-light text-brand-navy;
 }
