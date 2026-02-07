@@ -18,7 +18,8 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
 
   // API Key aur Model define karo
   const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-  const genAI = new GoogleGenAI(API_KEY);
+  console.log("API Key present:", !!import.meta.env.VITE_GEMINI_API_KEY);
+const genAI = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY || "");
 
   useEffect(() => {
     async function setupCamera() {
