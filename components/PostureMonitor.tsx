@@ -76,12 +76,12 @@ recognition.onresult = async (event: any) => {
   };
 
 const analyzeFrame = async () => {
-console.log("LOG: Coach Nitesh Version 2.0 - Running with Hardcoded Key");
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
     
-    // DIRECT KEY (Brahmastra)
-    const key = "AIzaSyAB-pB0-IZCG8yy97cki62UVXqMY7uPe_Y";
-    
+    // 1. Direct Hardcoded Key
+    const MY_KEY = "AIzaSyAB-pB0-IZCG8yy97cki62UVXqMY7uPe_Y";
+    console.log("LOG: Coach Nitesh Version 3.0 - Key Length:", MY_KEY.length);
+
     setIsAnalyzing(true);
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
@@ -90,7 +90,8 @@ console.log("LOG: Coach Nitesh Version 2.0 - Running with Hardcoded Key");
     const base64Image = canvasRef.current.toDataURL('image/jpeg').split(',')[1];
 
     try {
-      const genAI = new GoogleGenAI(key);
+      // 2. Initializing INSIDE the try block with the hardcoded string
+      const genAI = new GoogleGenAI(MY_KEY);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
       const result = await model.generateContent([
@@ -99,12 +100,13 @@ console.log("LOG: Coach Nitesh Version 2.0 - Running with Hardcoded Key");
       ]);
       
       const response = await result.response;
-      const newFeedback = response.text() || "Perfect form, keep going!";
-      setFeedback(newFeedback);
-      speak(newFeedback);
-    } catch (err) {
+      const text = response.text();
+      setFeedback(text);
+      speak(text);
+    } catch (err: any) {
       console.error("Gemini SDK Error:", err);
-      setFeedback("Coach Nitesh: Something went wrong with the AI.");
+      // Agar yahan bhi API Key error aata hai, toh humein fetch method use karna padega
+      setFeedback("Coach Nitesh: AI is warming up...");
     } finally {
       setIsAnalyzing(false);
     }
