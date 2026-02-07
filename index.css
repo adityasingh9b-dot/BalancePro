@@ -5,6 +5,20 @@
 ::-webkit-scrollbar-track { background: #04152d; }
 ::-webkit-scrollbar-thumb { background: #ea580c; border-radius: 10px; }
 
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #16243d;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #FFB800;
+}
+
 @theme {
   /* Yahan humne tere colors define kar diye jo body mein use ho rahe hain */
   --color-brand-light: #f9fafb;

@@ -389,44 +389,44 @@ const handleScheduleSubmit = async (e: React.FormEvent) => {
 };
 
 return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Tab Navigation - BalancePro Edition */}
-      <div className="flex gap-2 p-1.5 bg-[#04152d] border border-white/5 rounded-2xl w-fit mx-auto shadow-2xl">
-        {[
-          { id: 'classes', label: 'Live' }, 
-          { id: 'clients', label: 'Diet' }, 
-          { id: 'media', label: 'Vault' }, 
-          { id: 'management', label: 'CRM' }
-        ].map(tab => (
-          <button 
-            key={tab.id} 
-            onClick={() => setView(tab.id as any)} 
-            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300
-              ${view === tab.id 
-                ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' 
-                : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'}`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+    <div className="min-h-screen bg-[#081221] p-6 text-slate-200 selection:bg-[#FFB800] selection:text-black">
+      <div className="max-w-5xl mx-auto space-y-6">
+        
+        {/* Tab Navigation - BalancePro Midnight Edition */}
+        <div className="flex gap-2 p-1.5 bg-[#0F1A2D] border border-white/5 rounded-2xl w-fit mx-auto shadow-2xl">
+          {[
+            { id: 'classes', label: 'Live' }, 
+            { id: 'clients', label: 'Diet' }, 
+            { id: 'media', label: 'Vault' }, 
+            { id: 'management', label: 'CRM' }
+          ].map(tab => (
+            <button 
+              key={tab.id} 
+              onClick={() => setView(tab.id as any)} 
+              className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300
+                ${view === tab.id 
+                  ? 'bg-[#FFB800] text-[#081221] shadow-lg shadow-[#FFB800]/20 scale-105' 
+                  : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-
-
-{/* LIVE VIEW - BalancePro Edition */}
+{/* LIVE VIEW - BalancePro Midnight Edition */}
 {view === 'classes' && (
   <div className="grid gap-6 md:grid-cols-2 animate-in fade-in">
     {/* LEFT PANEL: STUDIO LAUNCH */}
-    <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-8 shadow-xl">
+    <div className="bg-[#0F1A2D] border border-white/5 rounded-[32px] p-8 shadow-xl">
       <h3 className="text-slate-500 text-[10px] font-black uppercase mb-8 tracking-[0.2em]">Studio Launch</h3>
       {isLive ? (
         <div className="space-y-4">
-          <div className="p-10 bg-orange-500/5 border border-orange-500/20 rounded-[24px] text-center animate-pulse">
-            <p className="text-orange-500 font-black uppercase tracking-widest text-xs">Studio is Live</p>
+          <div className="p-10 bg-[#FFB800]/5 border border-[#FFB800]/20 rounded-[24px] text-center animate-pulse">
+            <p className="text-[#FFB800] font-black uppercase tracking-widest text-xs">Studio is Live</p>
           </div>
           <button 
             onClick={() => activeClassData && onStartMeeting(activeClassData.meetingId)} 
-            className="w-full bg-orange-600 text-white py-5 rounded-2xl font-black uppercase text-xs shadow-xl shadow-orange-600/20 active:scale-95 transition-all"
+            className="w-full bg-[#FFB800] text-[#081221] py-5 rounded-2xl font-black uppercase text-xs shadow-xl shadow-[#FFB800]/20 active:scale-95 transition-all"
           >
             Enter Active Session
           </button>
@@ -440,22 +440,22 @@ return (
       ) : (
         <div className="space-y-6">
           <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Instant Invite:</p>
-          <div className="max-h-60 overflow-y-auto bg-black/20 rounded-2xl p-2 border border-white/5">
+          <div className="max-h-60 overflow-y-auto bg-black/20 rounded-2xl p-2 border border-white/5 custom-scrollbar">
             {clients.map(c => (
               <label key={c.uid} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-xl cursor-pointer group">
                 <input 
                   type="checkbox" 
                   checked={selectedInvites.includes(c.uid)} 
                   onChange={() => setSelectedInvites(prev => prev.includes(c.uid) ? prev.filter(i=>i!==c.uid) : [...prev, c.uid])} 
-                  className="accent-orange-500 w-5 h-5 rounded-lg" 
+                  className="accent-[#FFB800] w-5 h-5 rounded-lg" 
                 />
-                <span className="text-sm font-bold text-slate-300 group-hover:text-white uppercase italic transition-colors">{c.name}</span>
+                <span className="text-sm font-bold text-slate-400 group-hover:text-[#FFB800] uppercase italic transition-colors">{c.name}</span>
               </label>
             ))}
           </div>
           <button 
             onClick={() => startLiveClass(selectedInvites)} 
-            className="w-full bg-orange-600 text-white py-6 rounded-3xl font-black text-xl italic uppercase shadow-2xl shadow-orange-600/10 active:scale-95 transition-all"
+            className="w-full bg-[#FFB800] text-[#081221] py-6 rounded-3xl font-black text-xl italic uppercase shadow-2xl shadow-[#FFB800]/10 active:scale-95 transition-all"
           >
             Go Live Now
           </button>
@@ -464,13 +464,13 @@ return (
     </div>
 
     {/* RIGHT PANEL: UPCOMING & SCHEDULE */}
-    <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-8 flex flex-col h-[600px] shadow-xl">
+    <div className="bg-[#0F1A2D] border border-white/5 rounded-[32px] p-8 flex flex-col h-[600px] shadow-xl">
       <div className="flex justify-between items-center mb-8">
         <h3 className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Upcoming</h3>
         {!showScheduleForm && (
           <button 
             onClick={() => { setShowScheduleForm(true); setSelectedInvites([]); }} 
-            className="text-orange-500 text-[10px] font-black uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-full border border-orange-500/20 hover:bg-orange-500 hover:text-white transition-all"
+            className="text-[#FFB800] text-[10px] font-black uppercase tracking-widest bg-[#FFB800]/10 px-4 py-2 rounded-full border border-[#FFB800]/20 hover:bg-[#FFB800] hover:text-[#081221] transition-all"
           >
             + Schedule
           </button>
@@ -478,20 +478,20 @@ return (
       </div>
 
       {showScheduleForm ? (
-        <form onSubmit={handleScheduleSubmit} className="space-y-4 overflow-y-auto pr-2">
-          <input value={schedTitle} onChange={e => setSchedTitle(e.target.value)} placeholder="Session Title" className="w-full bg-[#0a1e3b] border border-white/5 p-4 rounded-xl text-white outline-none font-bold focus:border-orange-500/50 transition-all" />
-          <input type="datetime-local" value={schedTime} onChange={e => setSchedTime(e.target.value)} className="w-full bg-[#0a1e3b] border border-white/5 p-4 rounded-xl text-white outline-none focus:border-orange-500/50 transition-all" />
+        <form onSubmit={handleScheduleSubmit} className="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+          <input value={schedTitle} onChange={e => setSchedTitle(e.target.value)} placeholder="Session Title" className="w-full bg-[#16243d] border border-white/5 p-4 rounded-xl text-white outline-none font-bold focus:border-[#FFB800]/50 transition-all" />
+          <input type="datetime-local" value={schedTime} onChange={e => setSchedTime(e.target.value)} className="w-full bg-[#16243d] border border-white/5 p-4 rounded-xl text-white outline-none focus:border-[#FFB800]/50 transition-all scheme-dark" />
           
           <div className="space-y-2">
             <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Pre-select Members:</p>
-            <div className="max-h-48 overflow-y-auto bg-black/20 rounded-2xl p-2 border border-white/5">
+            <div className="max-h-48 overflow-y-auto bg-black/20 rounded-2xl p-2 border border-white/5 custom-scrollbar">
               {clients.map(c => (
                 <label key={c.uid} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer">
                   <input 
                     type="checkbox" 
                     checked={selectedInvites.includes(c.uid)} 
                     onChange={() => setSelectedInvites(prev => prev.includes(c.uid) ? prev.filter(i=>i!==c.uid) : [...prev, c.uid])} 
-                    className="accent-orange-500 w-4 h-4 rounded" 
+                    className="accent-[#FFB800] w-4 h-4 rounded" 
                   />
                   <span className="text-[11px] font-bold text-slate-400 uppercase italic">{c.name}</span>
                 </label>
@@ -501,19 +501,19 @@ return (
 
           <div className="flex gap-2 pt-2">
             <button type="button" onClick={() => { setShowScheduleForm(false); setSelectedInvites([]); }} className="flex-1 text-[10px] font-black uppercase text-slate-500 hover:text-white transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 bg-orange-600 text-white py-3 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-orange-600/10 active:scale-95 transition-all">Save Class</button>
+            <button type="submit" className="flex-1 bg-[#FFB800] text-[#081221] py-3 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-[#FFB800]/10 active:scale-95 transition-all">Save Class</button>
           </div>
         </form>
       ) : (
-        <div className="space-y-4 overflow-y-auto">
+        <div className="space-y-4 overflow-y-auto custom-scrollbar">
           {schedules.map(item => (
-            <div key={item.id} className="p-5 bg-white/5 rounded-[20px] border border-white/5 flex justify-between items-center group hover:border-orange-500/30 transition-all">
+            <div key={item.id} className="p-5 bg-white/5 rounded-[20px] border border-white/5 flex justify-between items-center group hover:border-[#FFB800]/30 transition-all">
               <div>
-                <span className="block font-black text-white italic uppercase">{item.title}</span>
+                <span className="block font-black text-white italic uppercase group-hover:text-[#FFB800] transition-colors">{item.title}</span>
                 <span className="text-[10px] text-slate-500 font-bold uppercase">{item.time}</span>
                 {item.invitedUids && item.invitedUids.length > 0 && (
                   <div className="flex gap-1 mt-1">
-                    <span className="text-[8px] bg-orange-500/10 text-orange-500 px-1.5 py-0.5 rounded font-black uppercase border border-orange-500/20">
+                    <span className="text-[8px] bg-[#FFB800]/10 text-[#FFB800] px-1.5 py-0.5 rounded font-black uppercase border border-[#FFB800]/20">
                       {item.invitedUids.length} Members
                     </span>
                   </div>
@@ -530,7 +530,7 @@ return (
                     }
                     startLiveClass(targetInvites, item.id);
                   }} 
-                  className="bg-[#0a1e3b] text-orange-500 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-orange-500/20 hover:bg-orange-500 hover:text-white transition-all shadow-lg"
+                  className="bg-[#16243d] text-[#FFB800] text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-[#FFB800]/20 hover:bg-[#FFB800] hover:text-[#081221] transition-all shadow-lg"
                 >
                   Launch
                 </button>
@@ -549,33 +549,37 @@ return (
   </div>
 )}
 
-
-{/* DIET VIEW - BalancePro Premium */}
+{/* DIET VIEW - BalancePro Premium Midnight Edition */}
 {view === 'clients' && (
-  <div className="bg-[#04152d] border border-white/5 rounded-[40px] p-12 max-w-2xl mx-auto shadow-2xl animate-in fade-in">
+  <div className="bg-[#0F1A2D] border border-white/5 rounded-[40px] p-12 max-w-2xl mx-auto shadow-2xl animate-in fade-in">
     <h3 className="text-3xl font-black italic uppercase text-white mb-10 leading-none tracking-tight">
-      Issue <span className="text-orange-500">Prescription</span>
+      Issue <span className="text-[#FFB800]">Prescription</span>
     </h3>
     
     <form onSubmit={handlePrescribe} className="space-y-8">
       {/* Member Selection */}
-      <select 
-        value={selectedClientForDiet} 
-        onChange={(e) => setSelectedClientForDiet(e.target.value)} 
-        className="w-full bg-[#0a1e3b] border border-white/10 p-5 rounded-2xl text-white font-bold outline-none focus:border-orange-500/50 transition-all appearance-none"
-      >
-        <option value="" className="bg-[#04152d]">Select Member...</option>
-        {clients.map(c => (
-          <option key={c.uid} value={c.uid} className="bg-[#04152d]">{c.name}</option>
-        ))}
-      </select>
+      <div className="relative">
+        <select 
+          value={selectedClientForDiet} 
+          onChange={(e) => setSelectedClientForDiet(e.target.value)} 
+          className="w-full bg-[#16243d] border border-white/10 p-5 rounded-2xl text-white font-bold outline-none focus:border-[#FFB800]/50 transition-all appearance-none cursor-pointer"
+        >
+          <option value="" className="bg-[#0F1A2D]">Select Member...</option>
+          {clients.map(c => (
+            <option key={c.uid} value={c.uid} className="bg-[#0F1A2D]">{c.name}</option>
+          ))}
+        </select>
+        <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        </div>
+      </div>
 
       {/* Nutrient Goals */}
       <textarea 
         value={nutrients} 
         onChange={(e) => setNutrients(e.target.value)} 
         placeholder="Nutrient Goals (Protein, Carbs, Fats...)" 
-        className="w-full bg-[#0a1e3b] border border-white/10 p-6 rounded-3xl h-32 text-white font-medium outline-none focus:border-orange-500/50 transition-all placeholder:text-slate-600 shadow-inner" 
+        className="w-full bg-[#16243d] border border-white/10 p-6 rounded-3xl h-32 text-white font-medium outline-none focus:border-[#FFB800]/50 transition-all placeholder:text-slate-600 shadow-inner resize-none" 
       />
 
       {/* Meal Protocol */}
@@ -583,13 +587,13 @@ return (
         value={meals} 
         onChange={(e) => setMeals(e.target.value)} 
         placeholder="Daily Meal Protocol..." 
-        className="w-full bg-[#0a1e3b] border border-white/10 p-6 rounded-3xl h-32 text-white font-medium outline-none focus:border-orange-500/50 transition-all placeholder:text-slate-600 shadow-inner" 
+        className="w-full bg-[#16243d] border border-white/10 p-6 rounded-3xl h-32 text-white font-medium outline-none focus:border-[#FFB800]/50 transition-all placeholder:text-slate-600 shadow-inner resize-none" 
       />
 
-      {/* Submit Button */}
+      {/* Send */}
       <button 
         type="submit" 
-        className="w-full bg-orange-600 text-white font-black py-6 rounded-[24px] text-xs uppercase tracking-[0.2em] shadow-2xl shadow-orange-600/20 hover:bg-orange-500 active:scale-[0.98] transition-all"
+        className="w-full bg-[#FFB800] text-[#081221] font-black py-6 rounded-[24px] text-xs uppercase tracking-[0.2em] shadow-2xl shadow-[#FFB800]/10 hover:bg-[#FFC800] active:scale-[0.98] transition-all"
       >
         Deliver Protocol
       </button>
@@ -597,16 +601,16 @@ return (
   </div>
 )}
 
-{/* VAULT VIEW - BalancePro Content Hub */}
+{/* VAULT VIEW - BalancePro Content Hub Midnight Edition */}
 {view === 'media' && (
   <div className="grid gap-6 md:grid-cols-[300px_1fr] animate-in fade-in">
     {/* SIDEBAR: FOLDERS */}
-    <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-8 h-fit shadow-xl">
+    <div className="bg-[#0F1A2D] border border-white/5 rounded-[32px] p-8 h-fit shadow-xl">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">Library Folders</h3>
         <button 
           onClick={() => { setIsAddingCategory(true); setTimeout(() => catInputRef.current?.focus(), 100); }} 
-          className="bg-orange-600 text-white w-8 h-8 rounded-full font-black text-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-orange-600/20"
+          className="bg-[#FFB800] text-[#081221] w-8 h-8 rounded-full font-black text-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-[#FFB800]/20"
         >
           +
         </button>
@@ -614,17 +618,17 @@ return (
 
       <div className="space-y-3">
         {isAddingCategory && (
-          <div className="space-y-2 mb-4 p-4 bg-black/20 rounded-2xl border border-orange-500/30">
+          <div className="space-y-2 mb-4 p-4 bg-black/20 rounded-2xl border border-[#FFB800]/30">
             <input 
               ref={catInputRef} 
               value={newCatName} 
               onChange={e => setNewCatName(e.target.value)} 
               placeholder="Folder Name" 
-              className="w-full bg-[#0a1e3b] border border-white/10 p-3 rounded-xl text-white text-xs outline-none font-bold focus:border-orange-500/50" 
+              className="w-full bg-[#16243d] border border-white/10 p-3 rounded-xl text-white text-xs outline-none font-bold focus:border-[#FFB800]/50" 
             />
             <div className="flex gap-2">
               <button onClick={() => setIsAddingCategory(false)} className="flex-1 text-[9px] font-black uppercase text-slate-500 hover:text-white">✕</button>
-              <button onClick={handleAddCategory} className="flex-1 bg-orange-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Create</button>
+              <button onClick={handleAddCategory} className="flex-1 bg-[#FFB800] text-[#081221] py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Create</button>
             </div>
           </div>
         )}
@@ -635,7 +639,7 @@ return (
             onClick={() => setActiveCategoryId(cat.id)} 
             className={`flex items-center justify-between p-4 rounded-[20px] cursor-pointer transition-all duration-300 group
               ${activeCategoryId === cat.id 
-                ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20 translate-x-1' 
+                ? 'bg-[#FFB800] text-[#081221] shadow-lg shadow-[#FFB800]/20 translate-x-1' 
                 : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'}`}
           >
             <span className="text-sm font-black uppercase italic tracking-wider">{cat.name}</span>
@@ -651,7 +655,7 @@ return (
     </div>
 
     {/* MAIN PANEL: CONTENT MANAGER */}
-    <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-10 min-h-[600px] shadow-xl">
+    <div className="bg-[#0F1A2D] border border-white/5 rounded-[32px] p-10 min-h-[600px] shadow-xl">
       {activeCategoryId ? (
         <div className="space-y-10">
           {/* UPLOAD SECTION */}
@@ -662,29 +666,29 @@ return (
                 value={newVidTitle} 
                 onChange={e => setNewVidTitle(e.target.value)} 
                 placeholder="Exercise Name (e.g. Deadlift Setup)" 
-                className="w-full bg-[#0a1e3b] border border-white/10 px-6 py-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-orange-500/50 transition-all" 
+                className="w-full bg-[#16243d] border border-white/10 px-6 py-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-[#FFB800]/50 transition-all" 
               />
 
               <div 
                 onClick={pickVideoFile}
                 className={`flex flex-col items-center justify-center border-2 border-dashed rounded-[24px] p-10 cursor-pointer transition-all
                   ${selectedFile 
-                    ? 'border-orange-500 bg-orange-500/5' 
+                    ? 'border-[#FFB800] bg-[#FFB800]/5' 
                     : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/[0.07]'}`}
               >
-                <div className={`w-12 h-12 rounded-full mb-3 flex items-center justify-center ${selectedFile ? 'bg-orange-600 text-white' : 'bg-white/5 text-slate-500'}`}>
+                <div className={`w-12 h-12 rounded-full mb-3 flex items-center justify-center ${selectedFile ? 'bg-[#FFB800] text-[#081221]' : 'bg-white/5 text-slate-500'}`}>
                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                 </div>
                 <span className="text-xs font-black uppercase tracking-widest text-slate-400">
                   {selectedFile ? selectedFile.name : 'Select MP4 Drill'}
                 </span>
-                {selectedFile && <span className="text-[9px] text-orange-500 mt-1 uppercase font-bold">Ready for deployment</span>}
+                {selectedFile && <span className="text-[9px] text-[#FFB800] mt-1 uppercase font-bold">Ready for deployment</span>}
               </div>
 
               <button 
                 onClick={handleAddVideo} 
                 disabled={isSyncing} 
-                className="w-full bg-orange-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg shadow-orange-600/20 active:scale-[0.98] transition-all disabled:opacity-50"
+                className="w-full bg-[#FFB800] text-[#081221] py-4 rounded-2xl font-black uppercase text-xs shadow-lg shadow-[#FFB800]/20 active:scale-[0.98] transition-all disabled:opacity-50"
               >
                 {isSyncing ? 'Processing Hub...' : 'Deploy Video to Vault'}
               </button>
@@ -694,9 +698,9 @@ return (
           {/* VIDEO GRID */}
           <div className="grid gap-6 sm:grid-cols-2">
             {videos.filter(v => v.categoryId === activeCategoryId).map(vid => (
-              <div key={vid.id} className="bg-white/5 border border-white/5 rounded-[32px] p-6 group hover:border-orange-500/30 transition-all">
+              <div key={vid.id} className="bg-white/5 border border-white/5 rounded-[32px] p-6 group hover:border-[#FFB800]/30 transition-all">
                 <div className="aspect-video bg-black/40 rounded-[20px] flex items-center justify-center relative mb-4 overflow-hidden shadow-inner">
-                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-slate-500 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-xl">
+                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-slate-500 group-hover:bg-[#FFB800] group-hover:text-[#081221] transition-all shadow-xl">
                     <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                   </div>
                   <button 
@@ -706,7 +710,7 @@ return (
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
-                <span className="block font-black text-white text-base italic uppercase tracking-wide group-hover:text-orange-500 transition-colors">{vid.title}</span>
+                <span className="block font-black text-white text-base italic uppercase tracking-wide group-hover:text-[#FFB800] transition-colors">{vid.title}</span>
               </div>
             ))}
           </div>
@@ -723,27 +727,28 @@ return (
   </div>
 )}
 
-{/* CRM VIEW - BalancePro Registry & Branding */}
+
+{/* CRM VIEW - BalancePro Registry & Branding Midnight Edition */}
 {view === 'management' && (
   <div className="grid gap-6 md:grid-cols-2 animate-in fade-in">
     <div className="space-y-6">
       {/* MEMBER REGISTRY */}
-      <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-8 h-fit shadow-xl">
+      <div className="bg-[#0F1A2D] border border-white/5 rounded-[32px] p-8 h-fit shadow-xl">
         <h3 className="text-white font-black text-xl mb-6 italic uppercase tracking-tight">
-          Registry <span className="text-orange-500">Access</span>
+          Registry <span className="text-[#FFB800]">Access</span>
         </h3>
         <form onSubmit={handleRegisterMember} className="space-y-4">
-          <input value={newMemberName} onChange={e => setNewMemberName(e.target.value)} placeholder="Full Name" className="w-full bg-[#0a1e3b] p-4 rounded-xl text-white font-bold outline-none border border-white/10 focus:border-orange-500/50 transition-all" />
-          <input value={newMemberPhone} onChange={e => setNewMemberPhone(e.target.value)} placeholder="Phone Number" className="w-full bg-[#0a1e3b] p-4 rounded-xl text-white font-bold outline-none border border-white/10 focus:border-orange-500/50 transition-all" />
-          <input value={newMemberCode} onChange={e => setNewMemberCode(e.target.value)} placeholder="Access Code" className="w-full bg-[#0a1e3b] p-4 rounded-xl text-white font-bold outline-none border border-white/10 focus:border-orange-500/50 transition-all" />
-          <button type="submit" className="w-full bg-orange-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-orange-600/20 active:scale-95 transition-all">
+          <input value={newMemberName} onChange={e => setNewMemberName(e.target.value)} placeholder="Full Name" className="w-full bg-[#16243d] p-4 rounded-xl text-white font-bold outline-none border border-white/10 focus:border-[#FFB800]/50 transition-all placeholder:text-slate-600" />
+          <input value={newMemberPhone} onChange={e => setNewMemberPhone(e.target.value)} placeholder="Phone Number" className="w-full bg-[#16243d] p-4 rounded-xl text-white font-bold outline-none border border-white/10 focus:border-[#FFB800]/50 transition-all placeholder:text-slate-600" />
+          <input value={newMemberCode} onChange={e => setNewMemberCode(e.target.value)} placeholder="Access Code" className="w-full bg-[#16243d] p-4 rounded-xl text-white font-bold outline-none border border-white/10 focus:border-[#FFB800]/50 transition-all placeholder:text-slate-600" />
+          <button type="submit" className="w-full bg-[#FFB800] text-[#081221] py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-[#FFB800]/20 active:scale-95 transition-all">
             Authorize Member
           </button>
         </form>
       </div>
 
       {/* STUDIO BRANDING SECTION */}
-      <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-8 shadow-xl">
+      <div className="bg-[#0F1A2D] border border-white/5 rounded-[32px] p-8 shadow-xl">
         <h3 className="text-slate-500 font-black text-[10px] uppercase mb-4 tracking-[0.2em]">Live Banner Preview</h3>
         <div className="space-y-4">
           <div className="relative aspect-video bg-black/40 rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center shadow-inner">
@@ -753,8 +758,8 @@ return (
               <div className="text-[10px] text-slate-700 font-black uppercase tracking-widest">No Banner Uploaded</div>
             )}
           </div>
-          <label className="block w-full bg-[#0a1e3b] hover:bg-white/5 text-slate-400 py-4 rounded-xl text-center cursor-pointer border border-white/10 transition-all">
-            <span className="text-[10px] font-black uppercase tracking-widest">
+          <label className="block w-full bg-[#16243d] hover:bg-white/5 text-slate-400 py-4 rounded-xl text-center cursor-pointer border border-white/10 transition-all group">
+            <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-[#FFB800]">
               {isSyncing ? 'Syncing...' : 'Upload Daily Image (JPG)'}
             </span>
             <input type="file" accept="image/jpeg,image/jpg" className="hidden" onChange={handleBannerUpload} disabled={isSyncing} />
@@ -764,19 +769,19 @@ return (
     </div>
 
     {/* MEMBER DIRECTORY */}
-    <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-8 h-full min-h-[600px] overflow-y-auto shadow-xl">
+    <div className="bg-[#0F1A2D] border border-white/5 rounded-[32px] p-8 h-full min-h-[600px] overflow-y-auto shadow-xl custom-scrollbar">
       <h3 className="text-slate-500 text-[10px] font-black uppercase mb-8 tracking-[0.2em]">Member Directory</h3>
       <div className="space-y-3">
         {clients.map(client => (
-          <div key={client.uid} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex justify-between items-center group hover:border-orange-500/30 transition-all">
+          <div key={client.uid} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex justify-between items-center group hover:border-[#FFB800]/30 transition-all">
             <div className="flex flex-col">
-              <span className="text-white font-black italic uppercase tracking-wide group-hover:text-orange-500 transition-colors">
+              <span className="text-white font-black italic uppercase tracking-wide group-hover:text-[#FFB800] transition-colors">
                 {client.name}
               </span>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[10px] text-slate-500 font-bold">{client.phone}</span>
                 <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
-                <span className="text-[10px] text-orange-500 font-black tracking-widest">
+                <span className="text-[10px] text-[#FFB800] font-black tracking-widest">
                   KEY: {client.accessCode}
                 </span>
               </div>
