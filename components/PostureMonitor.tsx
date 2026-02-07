@@ -16,10 +16,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
  const [isMuted, setIsMuted] = useState(false);
   const [isListening, setIsListening] = useState(false); // Ye line add karo
 
-  // API Key aur Model define karo
-  const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-  console.log("API Key present:", !!import.meta.env.VITE_GEMINI_API_KEY);
-const genAI = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY || "");
+
 
   useEffect(() => {
     async function setupCamera() {
@@ -56,23 +53,34 @@ const genAI = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY || "");
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
 
-    recognition.onresult = async (event: any) => {
+recognition.onresult = async (event: any) => {
       const msg = event.results[0][0].transcript;
+      const key = import.meta.env.VITE_GEMINI_API_KEY; 
+      const genAI = new GoogleGenAI(key); 
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Sirf ek baar
+      
       setFeedback(`You: ${msg}`);
       try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const result = await model.generateContent(`User says: ${msg}. Reply as Coach Nitesh in 1 sentence.`);
         const reply = result.response.text();
         setFeedback(reply);
         speak(reply);
       } catch (e) { console.error(e); }
     };
+
     recognition.start();
   };
 
 const analyzeFrame = async () => {
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
     
+    // Yahan key fetch karo
+    const key = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!key) {
+        console.error("API Key missing in environment!");
+        return;
+    }
+
     setIsAnalyzing(true);
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
@@ -81,7 +89,10 @@ const analyzeFrame = async () => {
     const base64Image = canvasRef.current.toDataURL('image/jpeg').split(',')[1];
 
     try {
+      // SDK ko yahan initialize karo (Fresh instance)
+      const genAI = new GoogleGenAI(key);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
       const result = await model.generateContent([
         { inlineData: { mimeType: 'image/jpeg', data: base64Image } },
         { text: "Act as a fitness coach. Analyze this image. Give a 1-sentence correction or high-energy confirmation. Max 12 words." }
@@ -89,13 +100,13 @@ const analyzeFrame = async () => {
       
       const newFeedback = result.response.text() || "Perfect form, keep going!";
       setFeedback(newFeedback);
-      speak(newFeedback); // Purane playCoachingVoice ki jagah ye
+      speak(newFeedback);
     } catch (err) {
       console.error("Analysis Error:", err);
     } finally {
       setIsAnalyzing(false);
     }
-  };
+};
 
   useEffect(() => {
   const interval = setInterval(analyzeFrame, 15000);
