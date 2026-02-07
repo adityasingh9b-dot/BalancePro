@@ -15,7 +15,6 @@ const App: React.FC = () => {
     active: false,
   });
 
-  // Load user from local storage (Simulating session persistence)
   useEffect(() => {
     try {
       const savedUser = localStorage.getItem('bp_auth_user');
@@ -49,12 +48,13 @@ const App: React.FC = () => {
     setMeetingMode({ id: '', active: false });
   }, []);
 
+  // LOADING STATE: Lime green hatakar Brand Orange aur Navy Blue kiya
   if (auth.loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-zinc-950">
+      <div className="flex items-center justify-center h-screen bg-brand-light">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-lime-400"></div>
-          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest animate-pulse">Initializing Studio...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-brand-orange"></div>
+          <p className="text-[10px] text-brand-navy font-bold uppercase tracking-widest animate-pulse">Initializing BalancePro...</p>
         </div>
       </div>
     );
@@ -76,17 +76,23 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col">
-      <header className="px-6 py-4 flex justify-between items-center border-b border-zinc-800">
+    <div className="min-h-screen bg-brand-light flex flex-col">
+      {/* HEADER: Lime green span ko Orange kiya aur background ko Navy */}
+      <header className="px-6 py-4 flex justify-between items-center border-b border-brand-grey/20 bg-white shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-lime-400 rounded-lg flex items-center justify-center text-zinc-950 font-bold">B</div>
-          <h1 className="text-xl font-bold tracking-tight">Balance<span className="text-lime-400">Pro</span></h1>
+          {/* Logo Icon matching the circular logo feel */}
+          <div className="w-8 h-8 bg-brand-navy rounded-full flex items-center justify-center text-white font-bold">B</div>
+          <h1 className="text-xl font-bold tracking-tight text-brand-navy">
+            Balance<span className="text-brand-orange">Pro</span>
+          </h1>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-zinc-400 hidden sm:inline uppercase font-bold tracking-widest text-[10px]">Studio: {auth.user.name}</span>
+          <span className="text-sm text-brand-navy/60 hidden sm:inline uppercase font-bold tracking-widest text-[10px]">
+            Session: {auth.user.name}
+          </span>
           <button 
             onClick={handleLogout}
-            className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 hover:text-white transition-colors border border-zinc-800 px-3 py-1 rounded-lg"
+            className="text-[10px] uppercase font-bold tracking-widest text-brand-red hover:bg-brand-red hover:text-white transition-all border border-brand-red/30 px-3 py-1 rounded-lg"
           >
             Logout
           </button>
@@ -101,8 +107,8 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="p-4 text-center text-zinc-700 text-[10px] uppercase tracking-widest font-bold">
-        &copy; 2024 BalancePro &bull; Live Studio Vault
+      <footer className="p-4 text-center text-brand-navy/40 text-[10px] uppercase tracking-widest font-bold">
+        &copy; 2026 BalancePro &bull; Wellness Studio
       </footer>
     </div>
   );
