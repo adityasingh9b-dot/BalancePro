@@ -48,7 +48,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
 const analyzeFrame = async () => {
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
     
-    const key = "AIzaSyAB-pB0-IZCG8yy97cki62UVXqMY7uPe_Y";
+    const key = "AIzaSyBF12w5wc-EQAifQjWFPQlisuV0ooWflsI";
     setIsAnalyzing(true);
 
     const ctx = canvasRef.current.getContext('2d');
@@ -57,8 +57,8 @@ const analyzeFrame = async () => {
     const base64Image = canvasRef.current.toDataURL('image/jpeg').split(',')[1];
 
     try {
-      // Direct Fetch call to Gemini API
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+      // UPDATED URL: v1 use kar rahe hain
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -72,7 +72,10 @@ const analyzeFrame = async () => {
       });
 
       const data = await response.json();
-      const text = data.candidates[0].content.parts[0].text || "Keep pushing, you're doing great!";
+      
+      // SAFETY CHECK: Agar candidates nahi hain toh handle karo
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Coach Nitesh is watching... keep your form tight!";
+      
       setFeedback(text);
       speak(text);
     } catch (err) {
@@ -93,17 +96,17 @@ const startVoiceChat = () => {
 
     recognition.onresult = async (event: any) => {
       const msg = event.results[0][0].transcript;
-      const key = "AIzaSyAB-pB0-IZCG8yy97cki62UVXqMY7uPe_Y";
+      const key = "AIzaSyBF12w5wc-EQAifQjWFPQlisuV0ooWflsI";
       setFeedback(`You: ${msg}`);
       
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `User says: ${msg}. Reply as Coach Nitesh in 1 short sentence.` }] }]
-          })
-        });
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        contents: [{ parts: [{ text: `User says: ${msg}. Reply as Coach Nitesh in 1 short sentence.` }] }]
+    })
+});
         const data = await response.json();
         const reply = data.candidates[0].content.parts[0].text;
         setFeedback(reply);
