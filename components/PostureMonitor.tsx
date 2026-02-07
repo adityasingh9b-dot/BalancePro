@@ -48,7 +48,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
 const analyzeFrame = async () => {
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
     
-    const key = "AIzaSyBF12w5wc-EQAifQjWFPQlisuV0ooWflsI";
+    const key = "AIzaSyClOCKVjhXSaqNiw4bTRZjnRYdSK5njxHs";
     setIsAnalyzing(true);
 
     const ctx = canvasRef.current.getContext('2d');
@@ -62,7 +62,8 @@ const analyzeFrame = async () => {
     const base64Image = canvasRef.current.toDataURL('image/jpeg', 0.7).split(',')[1];
 
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
+      // analyzeFrame ke andar ye line update karo:
+const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -102,11 +103,12 @@ const startVoiceChat = () => {
 
     recognition.onresult = async (event: any) => {
       const msg = event.results[0][0].transcript;
-      const key = "AIzaSyBF12w5wc-EQAifQjWFPQlisuV0ooWflsI";
+      const key = "AIzaSyClOCKVjhXSaqNiw4bTRZjnRYdSK5njxHs";
       setFeedback(`You: ${msg}`);
       
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
+        // Is URL ko try karo
+const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
