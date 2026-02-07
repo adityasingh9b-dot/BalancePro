@@ -53,39 +53,45 @@ const analyzeFrame = async () => {
 
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
-    ctx.drawImage(videoRef.current, 0, 0, 400, 300);
-    const base64Image = canvasRef.current.toDataURL('image/jpeg').split(',')[1];
+    
+    // IMPORTANT: Canvas internal size matches the drawing size
+    canvasRef.current.width = 640;
+    canvasRef.current.height = 480;
+    
+    ctx.drawImage(videoRef.current, 0, 0, 640, 480);
+    const base64Image = canvasRef.current.toDataURL('image/jpeg', 0.7).split(',')[1];
 
     try {
-      // UPDATED URL: v1 use kar rahe hain
       const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{
             parts: [
-              { text: "Act as a fitness coach. Analyze this image. Give a 1-sentence correction or high-energy confirmation. Max 12 words." },
+              { text: "You are Coach Nitesh, a hardcore Indian gym trainer. Look at this frame. Identify the person's exercise. If their back is rounded, shoulders are drooping, or form is loose, SHOUT a specific correction in Hinglish (e.g., 'Back seedhi kar!', 'Chest up buddy!'). If form is perfect, say 'Shaandaar, lage raho!'. Be extremely specific about their joints. Max 15 words." },
               { inlineData: { mimeType: "image/jpeg", data: base64Image } }
             ]
-          }]
+          }],
+          // Safety settings ko thoda loose rakha taaki 'strict' tone block na ho
+          safetySettings: [{ category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }]
         })
       });
 
       const data = await response.json();
+      console.log("Coach Nitesh Brain:", data); 
+
+      const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       
-      // SAFETY CHECK: Agar candidates nahi hain toh handle karo
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Coach Nitesh is watching... keep your form tight!";
-      
-      setFeedback(text);
-      speak(text);
+      if (aiReply) {
+        setFeedback(aiReply);
+        speak(aiReply);
+      }
     } catch (err) {
-      console.error("Fetch Error:", err);
-      setFeedback("Coach Nitesh: Network issue, keep going!");
+      console.error("Coach Brain Fade:", err);
     } finally {
       setIsAnalyzing(false);
     }
 };
-
 const startVoiceChat = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return alert("Mic not supported");
@@ -108,7 +114,7 @@ const startVoiceChat = () => {
     })
 });
         const data = await response.json();
-        const reply = data.candidates[0].content.parts[0].text;
+        const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Bhai, awaaz saaf nahi aayi, phir se bol!";
         setFeedback(reply);
         speak(reply);
       } catch (e) { console.error("Mic Fetch Error:", e); }
@@ -116,7 +122,7 @@ const startVoiceChat = () => {
     recognition.start();
 };
   useEffect(() => {
-  const interval = setInterval(analyzeFrame, 15000);
+  const interval = setInterval(analyzeFrame, 13000);
   return () => clearInterval(interval);
 }, [isSpeaking, isMuted]);
 
@@ -158,7 +164,7 @@ const startVoiceChat = () => {
       <div className="flex-1 flex flex-col items-center justify-center gap-8">
         <div className="relative w-full max-w-2xl aspect-video bg-zinc-900 rounded-[40px] overflow-hidden border border-zinc-800 shadow-[0_0_100px_rgba(0,0,0,0.5)]">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
-          <canvas ref={canvasRef} width="400" height="300" className="hidden" />
+          <canvas ref={canvasRef} width="640" height="480" className="hidden" />
           
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 left-0 w-full h-1 bg-lime-400/30 blur-sm animate-scan"></div>
