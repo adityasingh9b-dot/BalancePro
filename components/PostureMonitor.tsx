@@ -55,9 +55,9 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
 
 recognition.onresult = async (event: any) => {
       const msg = event.results[0][0].transcript;
-      const key = import.meta.env.VITE_GEMINI_API_KEY; 
+      const key = "AIzaSyAB-pB0-IZCG8yy97cki62UVXqMY7uPe_Y"; // Yahan bhi hardcode
       const genAI = new GoogleGenAI(key); 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Sirf ek baar
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
       setFeedback(`You: ${msg}`);
       try {
@@ -66,7 +66,7 @@ recognition.onresult = async (event: any) => {
         setFeedback(reply);
         speak(reply);
       } catch (e) { console.error(e); }
-    };
+};
 
     recognition.start();
   };
@@ -74,15 +74,9 @@ recognition.onresult = async (event: any) => {
 const analyzeFrame = async () => {
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
     
-    // YAHAN BADLAV HAI: Key ko explicitly string mein cast kar rahe hain
-    const key = String(import.meta.env.VITE_GEMINI_API_KEY || "").trim();
+    // DIRECT KEY (Brahmastra)
+    const key = "AIzaSyAB-pB0-IZCG8yy97cki62UVXqMY7uPe_Y";
     
-    if (!key || key === "undefined") {
-        console.error("CRITICAL: API Key is empty or undefined!");
-        setFeedback("Coach Nitesh: Key missing in Vercel settings.");
-        return;
-    }
-
     setIsAnalyzing(true);
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
@@ -91,7 +85,6 @@ const analyzeFrame = async () => {
     const base64Image = canvasRef.current.toDataURL('image/jpeg').split(',')[1];
 
     try {
-      // SDK initialization yahan karo
       const genAI = new GoogleGenAI(key);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
@@ -106,13 +99,11 @@ const analyzeFrame = async () => {
       speak(newFeedback);
     } catch (err) {
       console.error("Gemini SDK Error:", err);
-      // Agar error aata hai toh feedback update karo taaki pata chale
-      setFeedback("Coach Nitesh: AI is busy or key error.");
+      setFeedback("Coach Nitesh: Something went wrong with the AI.");
     } finally {
       setIsAnalyzing(false);
     }
 };
-
   useEffect(() => {
   const interval = setInterval(analyzeFrame, 15000);
   return () => clearInterval(interval);
