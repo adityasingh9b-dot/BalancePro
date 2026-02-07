@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Custom Scrollbar for BalancePro Theme */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #04152d; }
+::-webkit-scrollbar-thumb { background: #ea580c; border-radius: 10px; }
+
 @theme {
   /* Yahan humne tere colors define kar diye jo body mein use ho rahe hain */
   --color-brand-light: #f9fafb;

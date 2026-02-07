@@ -389,109 +389,133 @@ const handleScheduleSubmit = async (e: React.FormEvent) => {
 };
 
 return (
-{/* Tab Navigation */}
-<div className="flex gap-2 p-1.5 bg-[#0A192F] border border-white/10 rounded-2xl w-fit mx-auto shadow-2xl">
-  {[{ id: 'classes', label: 'Live' }, { id: 'clients', label: 'Diet' }, { id: 'media', label: 'Vault' }, { id: 'management', label: 'CRM' }].map(tab => (
-    <button 
-      key={tab.id} 
-      onClick={() => setView(tab.id as any)} 
-      className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-        view === tab.id 
-        ? 'bg-[#FF8C00] text-white shadow-lg' 
-        : 'text-white/40 hover:text-white'
-      }`}
-    >
-      {tab.label}
-    </button>
-  ))}
-</div>
-
-{/* LIVE VIEW */}
-{view === 'classes' && (
-  <div className="grid gap-6 md:grid-cols-2 animate-in fade-in">
-    
-    {/* LEFT PANEL: DIRECT GO LIVE */}
-<div className="bg-white border border-gray-100 rounded-[32px] p-8 shadow-xl">
-  <h3 className="text-[#0A192F]/40 text-[10px] font-black uppercase mb-8 tracking-[0.2em]">Studio Launch</h3>
-  {isLive ? (
-    <div className="space-y-4">
-      <div className="p-10 bg-[#FF8C00]/5 border border-[#FF8C00]/20 rounded-[24px] text-center animate-pulse">
-        <p className="text-[#FF8C00] font-black uppercase tracking-widest text-xs">Studio is Live</p>
-      </div>
-      <button 
-        onClick={() => activeClassData && onStartMeeting(activeClassData.meetingId)} 
-        className="w-full bg-[#0A192F] text-white py-5 rounded-2xl font-black uppercase text-xs shadow-xl shadow-[#0A192F]/20"
-      >
-        Enter Active Session
-      </button>
-      <button onClick={() => remove(ref(db, 'active_class'))} className="w-full border border-red-100 text-red-500 py-5 rounded-2xl font-black text-xs hover:bg-red-50 transition-colors">
-        End Session & Close Studio
-      </button>
-    </div>
-  ) : (
-    <div className="space-y-6">
-      <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Instant Invite:</p>
-      <div className="max-h-60 overflow-y-auto bg-gray-50 rounded-2xl p-2 border border-gray-100">
-        {clients.map(c => (
-          <label key={c.uid} className="flex items-center gap-4 p-4 hover:bg-white rounded-xl cursor-pointer">
-            <input type="checkbox" checked={selectedInvites.includes(c.uid)} onChange={() => setSelectedInvites(prev => prev.includes(c.uid) ? prev.filter(i=>i!==c.uid) : [...prev, c.uid])} className="accent-[#FF8C00] w-5 h-5 rounded-lg" />
-            <span className="text-sm font-bold text-[#0A192F] uppercase italic">{c.name}</span>
-          </label>
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
+      {/* Tab Navigation - BalancePro Edition */}
+      <div className="flex gap-2 p-1.5 bg-[#04152d] border border-white/5 rounded-2xl w-fit mx-auto shadow-2xl">
+        {[
+          { id: 'classes', label: 'Live' }, 
+          { id: 'clients', label: 'Diet' }, 
+          { id: 'media', label: 'Vault' }, 
+          { id: 'management', label: 'CRM' }
+        ].map(tab => (
+          <button 
+            key={tab.id} 
+            onClick={() => setView(tab.id as any)} 
+            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300
+              ${view === tab.id 
+                ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' 
+                : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'}`}
+          >
+            {tab.label}
+          </button>
         ))}
       </div>
-      <button onClick={() => startLiveClass(selectedInvites)} className="w-full bg-[#0A192F] text-white py-6 rounded-3xl font-black text-xl italic uppercase shadow-2xl shadow-[#0A192F]/20 active:scale-95 transition-all">Go Live Now</button>
-    </div>
-  )}
-</div>
 
-    {/* RIGHT PANEL: UPCOMING & SCHEDULE FORM */}
-    <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-8 flex flex-col h-[600px] shadow-xl">
+
+
+{/* LIVE VIEW - BalancePro Edition */}
+{view === 'classes' && (
+  <div className="grid gap-6 md:grid-cols-2 animate-in fade-in">
+    {/* LEFT PANEL: STUDIO LAUNCH */}
+    <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-8 shadow-xl">
+      <h3 className="text-slate-500 text-[10px] font-black uppercase mb-8 tracking-[0.2em]">Studio Launch</h3>
+      {isLive ? (
+        <div className="space-y-4">
+          <div className="p-10 bg-orange-500/5 border border-orange-500/20 rounded-[24px] text-center animate-pulse">
+            <p className="text-orange-500 font-black uppercase tracking-widest text-xs">Studio is Live</p>
+          </div>
+          <button 
+            onClick={() => activeClassData && onStartMeeting(activeClassData.meetingId)} 
+            className="w-full bg-orange-600 text-white py-5 rounded-2xl font-black uppercase text-xs shadow-xl shadow-orange-600/20 active:scale-95 transition-all"
+          >
+            Enter Active Session
+          </button>
+          <button 
+            onClick={() => remove(ref(db, 'active_class'))} 
+            className="w-full border border-white/5 text-slate-500 py-5 rounded-2xl font-black text-xs hover:bg-[#e31e24]/10 hover:text-[#e31e24] transition-colors"
+          >
+            End Session & Close Studio
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Instant Invite:</p>
+          <div className="max-h-60 overflow-y-auto bg-black/20 rounded-2xl p-2 border border-white/5">
+            {clients.map(c => (
+              <label key={c.uid} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-xl cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  checked={selectedInvites.includes(c.uid)} 
+                  onChange={() => setSelectedInvites(prev => prev.includes(c.uid) ? prev.filter(i=>i!==c.uid) : [...prev, c.uid])} 
+                  className="accent-orange-500 w-5 h-5 rounded-lg" 
+                />
+                <span className="text-sm font-bold text-slate-300 group-hover:text-white uppercase italic transition-colors">{c.name}</span>
+              </label>
+            ))}
+          </div>
+          <button 
+            onClick={() => startLiveClass(selectedInvites)} 
+            className="w-full bg-orange-600 text-white py-6 rounded-3xl font-black text-xl italic uppercase shadow-2xl shadow-orange-600/10 active:scale-95 transition-all"
+          >
+            Go Live Now
+          </button>
+        </div>
+      )}
+    </div>
+
+    {/* RIGHT PANEL: UPCOMING & SCHEDULE */}
+    <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-8 flex flex-col h-[600px] shadow-xl">
       <div className="flex justify-between items-center mb-8">
-        <h3 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">Upcoming</h3>
+        <h3 className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Upcoming</h3>
         {!showScheduleForm && (
-          <button onClick={() => { setShowScheduleForm(true); setSelectedInvites([]); }} className="text-lime-400 text-[10px] font-black uppercase tracking-widest bg-lime-400/10 px-4 py-2 rounded-full border border-lime-400/20">+ Schedule</button>
+          <button 
+            onClick={() => { setShowScheduleForm(true); setSelectedInvites([]); }} 
+            className="text-orange-500 text-[10px] font-black uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-full border border-orange-500/20 hover:bg-orange-500 hover:text-white transition-all"
+          >
+            + Schedule
+          </button>
         )}
       </div>
 
       {showScheduleForm ? (
         <form onSubmit={handleScheduleSubmit} className="space-y-4 overflow-y-auto pr-2">
-          <input value={schedTitle} onChange={e => setSchedTitle(e.target.value)} placeholder="Session Title" className="w-full bg-zinc-800 border border-zinc-700 p-4 rounded-xl text-white outline-none font-bold" />
-          <input type="datetime-local" value={schedTime} onChange={e => setSchedTime(e.target.value)} className="w-full bg-zinc-800 border border-zinc-700 p-4 rounded-xl text-white outline-none" />
+          <input value={schedTitle} onChange={e => setSchedTitle(e.target.value)} placeholder="Session Title" className="w-full bg-[#0a1e3b] border border-white/5 p-4 rounded-xl text-white outline-none font-bold focus:border-orange-500/50 transition-all" />
+          <input type="datetime-local" value={schedTime} onChange={e => setSchedTime(e.target.value)} className="w-full bg-[#0a1e3b] border border-white/5 p-4 rounded-xl text-white outline-none focus:border-orange-500/50 transition-all" />
           
           <div className="space-y-2">
-            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest ml-1">Pre-select Members for this slot:</p>
-            <div className="max-h-48 overflow-y-auto bg-zinc-950/50 rounded-2xl p-2 border border-zinc-800">
+            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-1">Pre-select Members:</p>
+            <div className="max-h-48 overflow-y-auto bg-black/20 rounded-2xl p-2 border border-white/5">
               {clients.map(c => (
-                <label key={c.uid} className="flex items-center gap-3 p-3 hover:bg-zinc-800 rounded-xl cursor-pointer">
+                <label key={c.uid} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer">
                   <input 
                     type="checkbox" 
                     checked={selectedInvites.includes(c.uid)} 
                     onChange={() => setSelectedInvites(prev => prev.includes(c.uid) ? prev.filter(i=>i!==c.uid) : [...prev, c.uid])} 
-                    className="accent-lime-400 w-4 h-4 rounded" 
+                    className="accent-orange-500 w-4 h-4 rounded" 
                   />
-                  <span className="text-[11px] font-bold text-zinc-300 uppercase italic">{c.name}</span>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase italic">{c.name}</span>
                 </label>
               ))}
             </div>
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={() => { setShowScheduleForm(false); setSelectedInvites([]); }} className="flex-1 text-[10px] font-black uppercase text-zinc-500">Cancel</button>
-            <button type="submit" className="flex-1 bg-lime-400 text-zinc-950 py-3 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-lime-400/10">Save Class</button>
+            <button type="button" onClick={() => { setShowScheduleForm(false); setSelectedInvites([]); }} className="flex-1 text-[10px] font-black uppercase text-slate-500 hover:text-white transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 bg-orange-600 text-white py-3 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-orange-600/10 active:scale-95 transition-all">Save Class</button>
           </div>
         </form>
       ) : (
         <div className="space-y-4 overflow-y-auto">
           {schedules.map(item => (
-            <div key={item.id} className="p-5 bg-zinc-800/40 rounded-[20px] border border-zinc-800 flex justify-between items-center group">
+            <div key={item.id} className="p-5 bg-white/5 rounded-[20px] border border-white/5 flex justify-between items-center group hover:border-orange-500/30 transition-all">
               <div>
                 <span className="block font-black text-white italic uppercase">{item.title}</span>
-                <span className="text-[10px] text-zinc-600 font-bold uppercase">{item.time}</span>
+                <span className="text-[10px] text-slate-500 font-bold uppercase">{item.time}</span>
                 {item.invitedUids && item.invitedUids.length > 0 && (
                   <div className="flex gap-1 mt-1">
-                     <span className="text-[8px] bg-lime-400/10 text-lime-400 px-1.5 py-0.5 rounded font-black uppercase">
-                       {item.invitedUids.length} Members Pre-selected
-                     </span>
+                    <span className="text-[8px] bg-orange-500/10 text-orange-500 px-1.5 py-0.5 rounded font-black uppercase border border-orange-500/20">
+                      {item.invitedUids.length} Members
+                    </span>
                   </div>
                 )}
               </div>
@@ -499,21 +523,20 @@ return (
               <div className="flex gap-2">
                 <button 
                   onClick={() => {
-                    // YAHAN FIX: selectedInvites state nahi, item.invitedUids use kar rahe hain
                     const targetInvites = item.invitedUids || [];
                     if (targetInvites.length === 0) {
-                      alert("No members were selected for this schedule!");
+                      alert("No members were selected!");
                       return;
                     }
                     startLiveClass(targetInvites, item.id);
                   }} 
-                  className="bg-zinc-800 text-lime-400 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-lime-400/20 hover:bg-lime-400 hover:text-zinc-950 transition-all"
+                  className="bg-[#0a1e3b] text-orange-500 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-orange-500/20 hover:bg-orange-500 hover:text-white transition-all shadow-lg"
                 >
                   Launch
                 </button>
                 <button 
                   onClick={() => handleDeleteSchedule(item.id)} 
-                  className="bg-zinc-900 text-red-500 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-red-500/20 opacity-0 group-hover:opacity-100 transition-all"
+                  className="bg-black/20 text-[#e31e24] text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-[#e31e24]/20 opacity-0 group-hover:opacity-100 hover:bg-[#e31e24] hover:text-white transition-all"
                 >
                   Del
                 </button>
@@ -527,68 +550,98 @@ return (
 )}
 
 
-{/* DIET VIEW */}
+{/* DIET VIEW - BalancePro Premium */}
 {view === 'clients' && (
-  <div className="bg-white border border-gray-100 rounded-[40px] p-12 max-w-2xl mx-auto shadow-2xl animate-in fade-in">
-    <h3 className="text-3xl font-black italic uppercase text-[#0A192F] mb-10 leading-none">Issue Prescription</h3>
+  <div className="bg-[#04152d] border border-white/5 rounded-[40px] p-12 max-w-2xl mx-auto shadow-2xl animate-in fade-in">
+    <h3 className="text-3xl font-black italic uppercase text-white mb-10 leading-none tracking-tight">
+      Issue <span className="text-orange-500">Prescription</span>
+    </h3>
+    
     <form onSubmit={handlePrescribe} className="space-y-8">
-      <select value={selectedClientForDiet} onChange={(e) => setSelectedClientForDiet(e.target.value)} className="w-full bg-gray-50 border border-gray-100 p-5 rounded-2xl text-[#0A192F] font-bold outline-none focus:border-[#FF8C00]">
-        <option value="">Select Member...</option>
-        {clients.map(c => <option key={c.uid} value={c.uid}>{c.name}</option>)}
+      {/* Member Selection */}
+      <select 
+        value={selectedClientForDiet} 
+        onChange={(e) => setSelectedClientForDiet(e.target.value)} 
+        className="w-full bg-[#0a1e3b] border border-white/10 p-5 rounded-2xl text-white font-bold outline-none focus:border-orange-500/50 transition-all appearance-none"
+      >
+        <option value="" className="bg-[#04152d]">Select Member...</option>
+        {clients.map(c => (
+          <option key={c.uid} value={c.uid} className="bg-[#04152d]">{c.name}</option>
+        ))}
       </select>
-      <textarea value={nutrients} onChange={(e) => setNutrients(e.target.value)} placeholder="Nutrient Goals (Protein, Carbs, Fats...)" className="w-full bg-gray-50 border border-gray-100 p-6 rounded-3xl h-32 text-[#0A192F] font-medium outline-none focus:border-[#FF8C00]" />
-      <textarea value={meals} onChange={(e) => setMeals(e.target.value)} placeholder="Daily Meal Protocol..." className="w-full bg-gray-50 border border-gray-100 p-6 rounded-3xl h-32 text-[#0A192F] font-medium outline-none focus:border-[#FF8C00]" />
-      <button type="submit" className="w-full bg-[#FF8C00] text-white font-black py-6 rounded-[24px] text-xs uppercase tracking-widest shadow-2xl shadow-[#FF8C00]/20">Deliver Protocol</button>
+
+      {/* Nutrient Goals */}
+      <textarea 
+        value={nutrients} 
+        onChange={(e) => setNutrients(e.target.value)} 
+        placeholder="Nutrient Goals (Protein, Carbs, Fats...)" 
+        className="w-full bg-[#0a1e3b] border border-white/10 p-6 rounded-3xl h-32 text-white font-medium outline-none focus:border-orange-500/50 transition-all placeholder:text-slate-600 shadow-inner" 
+      />
+
+      {/* Meal Protocol */}
+      <textarea 
+        value={meals} 
+        onChange={(e) => setMeals(e.target.value)} 
+        placeholder="Daily Meal Protocol..." 
+        className="w-full bg-[#0a1e3b] border border-white/10 p-6 rounded-3xl h-32 text-white font-medium outline-none focus:border-orange-500/50 transition-all placeholder:text-slate-600 shadow-inner" 
+      />
+
+      {/* Submit Button */}
+      <button 
+        type="submit" 
+        className="w-full bg-orange-600 text-white font-black py-6 rounded-[24px] text-xs uppercase tracking-[0.2em] shadow-2xl shadow-orange-600/20 hover:bg-orange-500 active:scale-[0.98] transition-all"
+      >
+        Deliver Protocol
+      </button>
     </form>
   </div>
 )}
 
-{/* VAULT VIEW */}
+{/* VAULT VIEW - BalancePro Content Hub */}
 {view === 'media' && (
   <div className="grid gap-6 md:grid-cols-[300px_1fr] animate-in fade-in">
-    {/* LEFT PANEL: FOLDERS */}
-    <div className="bg-[#0A192F] border border-white/10 rounded-[32px] p-8 h-fit shadow-xl">
+    {/* SIDEBAR: FOLDERS */}
+    <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-8 h-fit shadow-xl">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-white/40 font-black text-[10px] uppercase tracking-[0.2em]">Folders</h3>
+        <h3 className="text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">Library Folders</h3>
         <button 
           onClick={() => { setIsAddingCategory(true); setTimeout(() => catInputRef.current?.focus(), 100); }} 
-          className="bg-[#FF8C00] text-white w-8 h-8 rounded-full font-black text-xl hover:scale-110 active:scale-95 transition-transform shadow-lg shadow-[#FF8C00]/20"
+          className="bg-orange-600 text-white w-8 h-8 rounded-full font-black text-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-orange-600/20"
         >
           +
         </button>
       </div>
-      
+
       <div className="space-y-3">
         {isAddingCategory && (
-          <div className="space-y-2 mb-4 p-4 bg-white/5 rounded-2xl border border-white/10">
+          <div className="space-y-2 mb-4 p-4 bg-black/20 rounded-2xl border border-orange-500/30">
             <input 
               ref={catInputRef} 
               value={newCatName} 
               onChange={e => setNewCatName(e.target.value)} 
-              placeholder="Name" 
-              className="w-full bg-[#0A192F] border border-[#FF8C00]/50 p-3 rounded-xl text-white text-xs outline-none font-bold" 
+              placeholder="Folder Name" 
+              className="w-full bg-[#0a1e3b] border border-white/10 p-3 rounded-xl text-white text-xs outline-none font-bold focus:border-orange-500/50" 
             />
             <div className="flex gap-2">
-              <button onClick={() => setIsAddingCategory(false)} className="flex-1 text-[9px] font-black uppercase text-white/40">✕</button>
-              <button onClick={handleAddCategory} className="flex-1 bg-[#FF8C00] text-white py-2 rounded-xl text-[9px] font-black uppercase">Add</button>
+              <button onClick={() => setIsAddingCategory(false)} className="flex-1 text-[9px] font-black uppercase text-slate-500 hover:text-white">✕</button>
+              <button onClick={handleAddCategory} className="flex-1 bg-orange-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Create</button>
             </div>
           </div>
         )}
-        
+
         {categories.map((cat) => (
           <div 
             key={cat.id} 
             onClick={() => setActiveCategoryId(cat.id)} 
-            className={`flex items-center justify-between p-4 rounded-[20px] cursor-pointer transition-all ${
-              activeCategoryId === cat.id 
-              ? 'bg-[#FF8C00] text-white shadow-lg' 
-              : 'bg-white/5 text-white/40 hover:bg-white/10'
-            }`}
+            className={`flex items-center justify-between p-4 rounded-[20px] cursor-pointer transition-all duration-300 group
+              ${activeCategoryId === cat.id 
+                ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20 translate-x-1' 
+                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'}`}
           >
-            <span className="text-sm font-black uppercase italic">{cat.name}</span>
+            <span className="text-sm font-black uppercase italic tracking-wider">{cat.name}</span>
             <button 
               onClick={(e) => { e.stopPropagation(); if(confirm('Delete folder?')) remove(ref(db, `video_categories/${cat.id}`)); }} 
-              className={`text-xs p-1 transition-opacity ${activeCategoryId === cat.id ? 'text-white/60' : 'opacity-30 hover:opacity-100'}`}
+              className={`text-xs p-1 transition-opacity ${activeCategoryId === cat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-50 hover:text-red-500'}`}
             >
               ✕
             </button>
@@ -597,54 +650,43 @@ return (
       </div>
     </div>
 
-    {/* RIGHT PANEL: VIDEO MANAGEMENT */}
-    <div className="bg-white border border-gray-100 rounded-[32px] p-10 min-h-[600px] shadow-xl">
+    {/* MAIN PANEL: CONTENT MANAGER */}
+    <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-10 min-h-[600px] shadow-xl">
       {activeCategoryId ? (
         <div className="space-y-10">
           {/* UPLOAD SECTION */}
-          <div className="p-8 bg-gray-50 rounded-[32px] border border-gray-100">
-            <h3 className="text-[#0A192F]/40 font-black text-[10px] uppercase tracking-[0.2em] mb-6">Publish MP4 Drill</h3>
+          <div className="p-8 bg-black/20 rounded-[32px] border border-white/5">
+            <h3 className="text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] mb-6">Publish MP4 Drill</h3>
             <div className="grid gap-6">
               <input 
                 value={newVidTitle} 
                 onChange={e => setNewVidTitle(e.target.value)} 
-                placeholder="Exercise Name" 
-                className="w-full bg-white border border-gray-200 px-6 py-4 rounded-2xl text-sm font-bold text-[#0A192F] outline-none focus:border-[#FF8C00] transition-all" 
+                placeholder="Exercise Name (e.g. Deadlift Setup)" 
+                className="w-full bg-[#0a1e3b] border border-white/10 px-6 py-4 rounded-2xl text-sm font-bold text-white outline-none focus:border-orange-500/50 transition-all" 
               />
 
-              <div className="relative group">
-                <input 
-                  ref={fileInputRef} 
-                  type="file" 
-                  accept="video/*" 
-                  onChange={e => {
-                    const file = e.target.files?.[0];
-                    if (file) setSelectedFile(file);
-                  }} 
-                  className="hidden" 
-                />
-                
-                <div 
-                  onClick={pickVideoFile}
-                  className={`flex flex-col items-center justify-center border-2 border-dashed rounded-[24px] p-10 cursor-pointer transition-all ${
-                    selectedFile ? 'border-[#FF8C00] bg-[#FF8C00]/5' : 'border-gray-200 bg-white hover:border-[#0A192F]/20'
-                  }`}
-                >
-                  <span className={`text-xs font-black uppercase tracking-widest ${selectedFile ? 'text-[#FF8C00]' : 'text-gray-400'}`}>
-                    {selectedFile ? selectedFile.name : 'Select MP4 Drill'}
-                  </span>
-                  {selectedFile && (
-                    <span className="text-[9px] text-[#FF8C00]/60 mt-1 uppercase font-bold">Ready for deployment</span>
-                  )}
+              <div 
+                onClick={pickVideoFile}
+                className={`flex flex-col items-center justify-center border-2 border-dashed rounded-[24px] p-10 cursor-pointer transition-all
+                  ${selectedFile 
+                    ? 'border-orange-500 bg-orange-500/5' 
+                    : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/[0.07]'}`}
+              >
+                <div className={`w-12 h-12 rounded-full mb-3 flex items-center justify-center ${selectedFile ? 'bg-orange-600 text-white' : 'bg-white/5 text-slate-500'}`}>
+                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                 </div>
+                <span className="text-xs font-black uppercase tracking-widest text-slate-400">
+                  {selectedFile ? selectedFile.name : 'Select MP4 Drill'}
+                </span>
+                {selectedFile && <span className="text-[9px] text-orange-500 mt-1 uppercase font-bold">Ready for deployment</span>}
               </div>
 
               <button 
                 onClick={handleAddVideo} 
                 disabled={isSyncing} 
-                className="w-full bg-[#0A192F] text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg shadow-[#0A192F]/20 active:scale-[0.98] transition-all disabled:opacity-50"
+                className="w-full bg-orange-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg shadow-orange-600/20 active:scale-[0.98] transition-all disabled:opacity-50"
               >
-                {isSyncing ? 'Processing...' : 'Deploy Video'}
+                {isSyncing ? 'Processing Hub...' : 'Deploy Video to Vault'}
               </button>
             </div>
           </div>
@@ -652,87 +694,68 @@ return (
           {/* VIDEO GRID */}
           <div className="grid gap-6 sm:grid-cols-2">
             {videos.filter(v => v.categoryId === activeCategoryId).map(vid => (
-              <div key={vid.id} className="bg-white border border-gray-100 rounded-[32px] p-6 group hover:border-[#FF8C00]/30 transition-all shadow-sm hover:shadow-md">
-                <div className="aspect-video bg-[#0A192F] rounded-[20px] flex items-center justify-center relative mb-4 overflow-hidden">
-                  <svg className="w-10 h-10 text-white/20 group-hover:text-[#FF8C00] transition-all" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
+              <div key={vid.id} className="bg-white/5 border border-white/5 rounded-[32px] p-6 group hover:border-orange-500/30 transition-all">
+                <div className="aspect-video bg-black/40 rounded-[20px] flex items-center justify-center relative mb-4 overflow-hidden shadow-inner">
+                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-slate-500 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-xl">
+                    <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  </div>
                   <button 
                     onClick={() => handleDeleteVideo(vid.id, vid.publicId)}
-                    className="absolute top-3 right-3 bg-white/10 hover:bg-red-500 text-white p-2 rounded-full backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 shadow-xl"
+                    className="absolute top-2 right-2 bg-black/60 text-white hover:text-red-500 p-2 rounded-full backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
-                <span className="block font-black text-[#0A192F] text-base italic uppercase tracking-tight">{vid.title}</span>
+                <span className="block font-black text-white text-base italic uppercase tracking-wide group-hover:text-orange-500 transition-colors">{vid.title}</span>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center h-full text-gray-300 font-black uppercase text-[10px] tracking-widest">
-          Select Folder to Manage Vault
+        <div className="flex flex-col items-center justify-center h-full space-y-4">
+          <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center text-slate-800">
+             <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+          </div>
+          <p className="text-slate-600 font-black uppercase text-[10px] tracking-widest">Select a folder to manage your vault</p>
         </div>
       )}
     </div>
   </div>
 )}
 
-
-     {/* CRM VIEW */}
+{/* CRM VIEW - BalancePro Registry & Branding */}
 {view === 'management' && (
   <div className="grid gap-6 md:grid-cols-2 animate-in fade-in">
     <div className="space-y-6">
-      {/* REGISTRY FORM */}
-      <div className="bg-[#0A192F] border border-white/10 rounded-[32px] p-8 h-fit shadow-xl">
-        <h3 className="text-white font-black text-xl mb-6 italic uppercase tracking-tight">Registry</h3>
+      {/* MEMBER REGISTRY */}
+      <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-8 h-fit shadow-xl">
+        <h3 className="text-white font-black text-xl mb-6 italic uppercase tracking-tight">
+          Registry <span className="text-orange-500">Access</span>
+        </h3>
         <form onSubmit={handleRegisterMember} className="space-y-4">
-          <input 
-            value={newMemberName} 
-            onChange={e => setNewMemberName(e.target.value)} 
-            placeholder="Full Name" 
-            className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-white font-bold outline-none focus:border-[#FF8C00] transition-all" 
-          />
-          <input 
-            value={newMemberPhone} 
-            onChange={e => setNewMemberPhone(e.target.value)} 
-            placeholder="Phone Number" 
-            className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-white font-bold outline-none focus:border-[#FF8C00] transition-all" 
-          />
-          <input 
-            value={newMemberCode} 
-            onChange={e => setNewMemberCode(e.target.value)} 
-            placeholder="Access Code" 
-            className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-white font-bold outline-none focus:border-[#FF8C00] transition-all" 
-          />
-          <button 
-            type="submit" 
-            className="w-full bg-[#FF8C00] text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-[#FF8C00]/20 active:scale-95 transition-all"
-          >
+          <input value={newMemberName} onChange={e => setNewMemberName(e.target.value)} placeholder="Full Name" className="w-full bg-[#0a1e3b] p-4 rounded-xl text-white font-bold outline-none border border-white/10 focus:border-orange-500/50 transition-all" />
+          <input value={newMemberPhone} onChange={e => setNewMemberPhone(e.target.value)} placeholder="Phone Number" className="w-full bg-[#0a1e3b] p-4 rounded-xl text-white font-bold outline-none border border-white/10 focus:border-orange-500/50 transition-all" />
+          <input value={newMemberCode} onChange={e => setNewMemberCode(e.target.value)} placeholder="Access Code" className="w-full bg-[#0a1e3b] p-4 rounded-xl text-white font-bold outline-none border border-white/10 focus:border-orange-500/50 transition-all" />
+          <button type="submit" className="w-full bg-orange-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-orange-600/20 active:scale-95 transition-all">
             Authorize Member
           </button>
         </form>
       </div>
 
       {/* STUDIO BRANDING SECTION */}
-      <div className="bg-white border border-gray-100 rounded-[32px] p-8 shadow-xl">
-        <h3 className="text-[#0A192F] font-black text-lg mb-4 italic uppercase tracking-tight">Studio Branding</h3>
+      <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-8 shadow-xl">
+        <h3 className="text-slate-500 font-black text-[10px] uppercase mb-4 tracking-[0.2em]">Live Banner Preview</h3>
         <div className="space-y-4">
-          <div className="relative aspect-video bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 flex items-center justify-center group">
+          <div className="relative aspect-video bg-black/40 rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center shadow-inner">
             {bannerPreview ? (
               <img src={bannerPreview} alt="Trending" className="w-full h-full object-cover" />
             ) : (
-              <div className="text-[10px] text-gray-300 font-black uppercase tracking-widest">No Banner Uploaded</div>
+              <div className="text-[10px] text-slate-700 font-black uppercase tracking-widest">No Banner Uploaded</div>
             )}
-            <div className="absolute inset-0 bg-[#0A192F]/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-               <p className="text-white text-[10px] font-black uppercase">Replace Image</p>
-            </div>
           </div>
-          <label className="block w-full bg-[#0A192F] hover:bg-[#162a4a] text-white py-4 rounded-xl text-center cursor-pointer transition-all shadow-lg shadow-[#0A192F]/10">
+          <label className="block w-full bg-[#0a1e3b] hover:bg-white/5 text-slate-400 py-4 rounded-xl text-center cursor-pointer border border-white/10 transition-all">
             <span className="text-[10px] font-black uppercase tracking-widest">
-              {isSyncing ? 'Processing...' : 'Upload Daily Image (JPG)'}
+              {isSyncing ? 'Syncing...' : 'Upload Daily Image (JPG)'}
             </span>
             <input type="file" accept="image/jpeg,image/jpg" className="hidden" onChange={handleBannerUpload} disabled={isSyncing} />
           </label>
@@ -741,47 +764,42 @@ return (
     </div>
 
     {/* MEMBER DIRECTORY */}
-    <div className="bg-white border border-gray-100 rounded-[32px] p-8 h-full min-h-[600px] overflow-y-auto shadow-xl">
-      <div className="flex justify-between items-center mb-8">
-        <h3 className="text-[#0A192F]/40 text-[10px] font-black uppercase tracking-[0.2em]">Member Directory</h3>
-        <span className="bg-gray-50 text-[#0A192F] text-[9px] font-black px-3 py-1 rounded-full border border-gray-100 uppercase">
-          {clients.length} Active
-        </span>
-      </div>
-      
+    <div className="bg-[#04152d] border border-white/5 rounded-[32px] p-8 h-full min-h-[600px] overflow-y-auto shadow-xl">
+      <h3 className="text-slate-500 text-[10px] font-black uppercase mb-8 tracking-[0.2em]">Member Directory</h3>
       <div className="space-y-3">
         {clients.map(client => (
-          <div key={client.uid} className="p-5 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center group hover:border-[#FF8C00]/30 transition-all shadow-sm">
+          <div key={client.uid} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex justify-between items-center group hover:border-orange-500/30 transition-all">
             <div className="flex flex-col">
-              <span className="text-[#0A192F] font-black italic uppercase text-base">{client.name}</span>
+              <span className="text-white font-black italic uppercase tracking-wide group-hover:text-orange-500 transition-colors">
+                {client.name}
+              </span>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[10px] text-gray-400 font-bold">{client.phone}</span>
-                <span className="w-1 h-1 bg-gray-200 rounded-full"></span>
-                <span className="text-[10px] text-[#FF8C00] font-black tracking-widest">CODE: {client.accessCode}</span>
+                <span className="text-[10px] text-slate-500 font-bold">{client.phone}</span>
+                <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
+                <span className="text-[10px] text-orange-500 font-black tracking-widest">
+                  KEY: {client.accessCode}
+                </span>
               </div>
             </div>
             <button 
               onClick={() => handleDeleteClient(client.uid)} 
-              className="p-2 bg-white text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-0 group-hover:opacity-100 border border-gray-100"
+              className="p-2 text-slate-700 hover:text-[#e31e24] transition-colors opacity-0 group-hover:opacity-100"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
         ))}
         {clients.length === 0 && (
           <div className="text-center py-20 opacity-20">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0A192F]">Registry Empty</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Registry Empty</p>
           </div>
         )}
       </div>
     </div>
   </div>
 )}
-      
-      
-      
     </div>
   );
 };
