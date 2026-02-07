@@ -74,10 +74,12 @@ recognition.onresult = async (event: any) => {
 const analyzeFrame = async () => {
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
     
-    // Yahan key fetch karo
-    const key = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!key) {
-        console.error("API Key missing in environment!");
+    // YAHAN BADLAV HAI: Key ko explicitly string mein cast kar rahe hain
+    const key = String(import.meta.env.VITE_GEMINI_API_KEY || "").trim();
+    
+    if (!key || key === "undefined") {
+        console.error("CRITICAL: API Key is empty or undefined!");
+        setFeedback("Coach Nitesh: Key missing in Vercel settings.");
         return;
     }
 
@@ -89,7 +91,7 @@ const analyzeFrame = async () => {
     const base64Image = canvasRef.current.toDataURL('image/jpeg').split(',')[1];
 
     try {
-      // SDK ko yahan initialize karo (Fresh instance)
+      // SDK initialization yahan karo
       const genAI = new GoogleGenAI(key);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
@@ -98,11 +100,14 @@ const analyzeFrame = async () => {
         { text: "Act as a fitness coach. Analyze this image. Give a 1-sentence correction or high-energy confirmation. Max 12 words." }
       ]);
       
-      const newFeedback = result.response.text() || "Perfect form, keep going!";
+      const response = await result.response;
+      const newFeedback = response.text() || "Perfect form, keep going!";
       setFeedback(newFeedback);
       speak(newFeedback);
     } catch (err) {
-      console.error("Analysis Error:", err);
+      console.error("Gemini SDK Error:", err);
+      // Agar error aata hai toh feedback update karo taaki pata chale
+      setFeedback("Coach Nitesh: AI is busy or key error.");
     } finally {
       setIsAnalyzing(false);
     }
