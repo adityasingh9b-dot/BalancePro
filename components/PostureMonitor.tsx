@@ -53,19 +53,23 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
 
+
 recognition.onresult = async (event: any) => {
-      const msg = event.results[0][0].transcript;
-      const key = "AIzaSyAB-pB0-IZCG8yy97cki62UVXqMY7uPe_Y"; // Yahan bhi hardcode
-      const genAI = new GoogleGenAI(key); 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      
-      setFeedback(`You: ${msg}`);
-      try {
-        const result = await model.generateContent(`User says: ${msg}. Reply as Coach Nitesh in 1 sentence.`);
-        const reply = result.response.text();
-        setFeedback(reply);
-        speak(reply);
-      } catch (e) { console.error(e); }
+  const msg = event.results[0][0].transcript;
+  const key = "AIzaSyAB-pB0-IZCG8yy97cki62UVXqMY7uPe_Y"; 
+  
+  setFeedback(`You: ${msg}`);
+  
+  try {
+    const genAI = new GoogleGenAI(key); 
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(`User says: ${msg}. Reply as Coach Nitesh in 1 sentence.`);
+    const reply = result.response.text();
+    setFeedback(reply);
+    speak(reply);
+  } catch (e) { 
+    console.error("Mic AI Error:", e); 
+  }
 };
 
     recognition.start();
