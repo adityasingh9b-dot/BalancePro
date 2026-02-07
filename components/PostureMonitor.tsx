@@ -43,45 +43,45 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     utterance.onend = () => setIsSpeaking(false);
     window.speechSynthesis.speak(utterance);
   };
-
-
 const analyzeFrame = async () => {
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
     
-    const key = "AIzaSyClOCKVjhXSaqNiw4bTRZjnRYdSK5njxHs";
+    const key = "AIzaSyClOCKVjhXSaqNiw4bTRZjnRYdSK5njxHs"; // Make sure this key is active
     setIsAnalyzing(true);
 
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
     
-    // IMPORTANT: Canvas internal size matches the drawing size
     canvasRef.current.width = 640;
     canvasRef.current.height = 480;
-    
     ctx.drawImage(videoRef.current, 0, 0, 640, 480);
     const base64Image = canvasRef.current.toDataURL('image/jpeg', 0.7).split(',')[1];
 
     try {
-const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`, {
+      // STABLE URL CHANGE: v1 instead of v1beta, removed -latest
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{
             parts: [
-              { text: "You are Coach Nitesh, a hardcore Indian gym trainer. Look at this frame. Identify the person's exercise. If their back is rounded, shoulders are drooping, or form is loose, SHOUT a specific correction in Hinglish (e.g., 'Back seedhi kar!', 'Chest up buddy!'). If form is perfect, say 'Shaandaar, lage raho!'. Be extremely specific about their joints. Max 15 words." },
+              { text: "You are Coach Nitesh, a hardcore Indian gym trainer. Identify the person's exercise. If back is rounded or form loose, SHOUT correction in Hinglish (max 15 words). If perfect, say 'Shaandaar!'" },
               { inlineData: { mimeType: "image/jpeg", data: base64Image } }
             ]
-          }],
-          // Safety settings ko thoda loose rakha taaki 'strict' tone block na ho
-          safetySettings: [{ category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }]
+          }]
         })
       });
 
       const data = await response.json();
       console.log("Coach Nitesh Brain:", data); 
 
+      if (data.error) {
+          console.error("Critical API Error:", data.error.message);
+          setFeedback("Oye! Google ka server nakhre kar raha hai.");
+          return;
+      }
+
       const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      
       if (aiReply) {
         setFeedback(aiReply);
         speak(aiReply);
@@ -92,6 +92,7 @@ const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/m
       setIsAnalyzing(false);
     }
 };
+
 const startVoiceChat = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return alert("Mic not supported");
@@ -106,15 +107,16 @@ const startVoiceChat = () => {
       setFeedback(`You: ${msg}`);
       
       try {
-const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        contents: [{ parts: [{ text: `User says: ${msg}. Reply as Coach Nitesh in 1 short sentence.` }] }]
-    })
-});
+        // STABLE URL CHANGE
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: `User says: ${msg}. Reply as Coach Nitesh (Indian Gym Trainer) in 1 short sentence.` }] }]
+            })
+        });
         const data = await response.json();
-        const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Bhai, awaaz saaf nahi aayi, phir se bol!";
+        const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Bhai, awaaz saaf nahi aayi!";
         setFeedback(reply);
         speak(reply);
       } catch (e) { console.error("Mic Fetch Error:", e); }
