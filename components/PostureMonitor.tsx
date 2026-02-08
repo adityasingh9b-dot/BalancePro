@@ -5,7 +5,7 @@ import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // 1. INIT GEMINI
-const API_KEY = "YOUR_API_KEY_HERE"; // Bhai apni key yahan daal dena
+const API_KEY = "AIzaSyDBAMQVeCbWgaQxzggJyYTlU2kUebIHjDc"; // Bhai apni key yahan daal dena
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 interface PostureMonitorProps {
