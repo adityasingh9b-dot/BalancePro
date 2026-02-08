@@ -1,13 +1,24 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
+<<<<<<< HEAD
 import { GoogleGenAI } from "@google/genai";
 
 // Vite-friendly initialization
 const ai = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY || "YOUR_FALLBACK_KEY");
 
+=======
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+>>>>>>> 6416803
 interface PostureMonitorProps {
   onBack: () => void;
 }
 
+<<<<<<< HEAD
+=======
+// Global variable to survive React's Strict Mode / Re-mounts
+let globalLastRequestTime = 0;
+
+>>>>>>> 6416803
 // --- UTILS ---
 function decodeBase64(base64: string) {
   const binaryString = atob(base64);
@@ -32,8 +43,20 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const genAIInstanceRef = useRef<GoogleGenerativeAI | null>(null);
   
-  const [feedback, setFeedback] = useState("Align your body in the frame...");
+  // Ref to hold the latest analyze function for setInterval
+  const analyzeRef = useRef<() => void>();
+
+  if (!genAIInstanceRef.current) {
+    const KEY = import.meta.env.VITE_GEMINI_API_KEY;
+    if (KEY) {
+      genAIInstanceRef.current = new GoogleGenerativeAI(KEY);
+      console.log("✅ Coach Nitesh Brain Ready!");
+    }
+  }
+
+  const [feedback, setFeedback] = useState("Coach is watching...");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false); // Fixed missing state
   const [isMuted, setIsMuted] = useState(false);
@@ -42,30 +65,51 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     async function setupCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
+<<<<<<< HEAD
           video: { facingMode: 'user' },
           audio: false 
         });
         if (videoRef.current) videoRef.current.srcObject = stream;
         
+=======
+          video: { facingMode: 'user', width: 640, height: 480 } 
+        });
+        if (videoRef.current) videoRef.current.srcObject = stream;
+>>>>>>> 6416803
         if (!audioContextRef.current) {
           audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
         }
       } catch (err) {
+<<<<<<< HEAD
         console.error("Camera access denied.", err);
+=======
+        setFeedback("Camera enable karo bhai!");
+>>>>>>> 6416803
       }
     }
     setupCamera();
     return () => { audioContextRef.current?.close(); };
   }, []);
 
+<<<<<<< HEAD
   const playCoachingVoice = async (text: string) => {
     if (isMuted || !audioContextRef.current) return;
+=======
+  const playCoachingVoice = useCallback(async (text: string) => {
+    const aiInstance = genAIInstanceRef.current;
+    if (isMuted || !audioContextRef.current || !aiInstance) return;
+>>>>>>> 6416803
     if (audioContextRef.current.state === 'suspended') await audioContextRef.current.resume();
 
     try {
       setIsSpeaking(true);
+<<<<<<< HEAD
       const model = ai.getGenerativeModel({ model: "gemini-2.5-flash-preview-tts" });
       const response = await model.generateContent({
+=======
+      const model = aiInstance.getGenerativeModel({ model: "gemini-2.0-flash" }, { apiVersion: "v1beta" });
+      const result = await model.generateContent({
+>>>>>>> 6416803
         contents: [{ role: 'user', parts: [{ text: `Speak as Coach Nitesh (hardcore Indian gym coach) in Hinglish: ${text}` }] }],
         generationConfig: {
           //@ts-ignore
@@ -74,8 +118,12 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         },
       });
 
+<<<<<<< HEAD
       const base64Audio = response.response.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
       
+=======
+      const base64Audio = result.response.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)?.inlineData?.data;
+>>>>>>> 6416803
       if (base64Audio && audioContextRef.current) {
         const audioBuffer = await decodeAudioData(decodeBase64(base64Audio), audioContextRef.current);
         const source = audioContextRef.current.createBufferSource();
@@ -87,18 +135,24 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         setIsSpeaking(false);
       }
     } catch (err) {
-      console.error("TTS Error:", err);
       setIsSpeaking(false);
     }
-  };
+  }, [isMuted]);
 
   const analyzeFrame = useCallback(async () => {
+<<<<<<< HEAD
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
+=======
+    const now = Date.now();
+>>>>>>> 6416803
     
-    setIsAnalyzing(true);
-    const ctx = canvasRef.current.getContext('2d');
-    if (!ctx) return;
+    // Hard check: survive rapid re-mounts
+    if (now - globalLastRequestTime < 20000) {
+      console.log("⏳ Shield Active: Too soon!");
+      return;
+    }
 
+<<<<<<< HEAD
     ctx.drawImage(videoRef.current, 0, 0, 400, 300);
     const base64Image = canvasRef.current.toDataURL('image/jpeg', 0.6).split(',')[1];
 
@@ -123,12 +177,97 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     const interval = setInterval(analyzeFrame, 8000); 
     return () => clearInterval(interval);
   }, [analyzeFrame]);
+=======
+    const currentAI = genAIInstanceRef.current;
+    if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking || !currentAI) return;
+
+    setIsAnalyzing(true);
+    globalLastRequestTime = now; // Mark request sent
+
+    try {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx || !videoRef.current) return;
+
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      const base64Image = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
+      
+      const model = currentAI.getGenerativeModel({ model: "gemini-2.0-flash" }, { apiVersion: "v1beta" });
+      const result = await model.generateContent([
+        { text: "Act as Coach Nitesh (hardcore Indian gym trainer). Analyze form in image. Give 1 aggressive correction in Hinglish (max 10 words). Focus on back, shoulders or depth." },
+        { inlineData: { mimeType: 'image/jpeg', data: base64Image } }
+      ]);
+      
+      const responseText = result.response.text();
+      if (responseText) {
+        setFeedback(responseText);
+        await playCoachingVoice(responseText);
+      }
+    } catch (err: any) {
+      if (err.message?.includes("429")) setFeedback("Limit hit! Thoda rest karo.");
+      console.error("API Error:", err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [isAnalyzing, isSpeaking, playCoachingVoice]);
+
+  // Keep the ref updated with the latest callback
+  useEffect(() => {
+    analyzeRef.current = analyzeFrame;
+  }, [analyzeFrame]);
+
+  useEffect(() => {
+    console.log("🚀 Coach Nitesh Engine Started");
+    
+    // Interval only starts ONCE. It calls the latest function via ref.
+    const timer = setInterval(() => {
+      if (analyzeRef.current) analyzeRef.current();
+    }, 5000); // Check every 5s, globalLastRequestTime handles the 20s gap
+
+    return () => {
+      console.log("🛑 Cleaning Up Interval");
+      clearInterval(timer);
+    };
+  }, []); // EMPTY dependency array is crucial!
+>>>>>>> 6416803
 
   // UI remains identical to your design...
   return (
+<<<<<<< HEAD
     <div className="fixed inset-0 bg-zinc-950 z-50 flex flex-col p-6 overflow-hidden">
         {/* Your existing JSX here */}
         {/* ... (Keep the beautiful UI you built) ... */}
+=======
+    <div className="fixed inset-0 bg-black z-50 flex flex-col p-4 font-sans text-white">
+      <div className="flex justify-between items-center mb-4">
+        <button onClick={onBack} className="text-zinc-500 font-bold text-xs uppercase hover:text-white">
+          ← Exit Session
+        </button>
+        <div className="flex gap-2 items-center">
+          <button onClick={() => setIsMuted(!isMuted)} className="bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+            {isMuted ? "🔇" : "🔊"}
+          </button>
+          <span className="bg-lime-500 text-black text-[10px] font-black px-3 py-1 rounded-full uppercase">
+            Coach Nitesh Live
+          </span>
+        </div>
+      </div>
+
+      <div className="flex-1 relative flex items-center justify-center">
+        <div className="w-full max-w-xl aspect-video bg-zinc-900 rounded-[32px] overflow-hidden border-2 border-zinc-800 relative">
+          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
+          <canvas ref={canvasRef} className="hidden" width="640" height="480" />
+          
+          <div className="absolute bottom-6 left-6 right-6">
+             <div className={`p-5 rounded-3xl backdrop-blur-xl bg-black/70 border-2 transition-all duration-300 ${isSpeaking ? 'border-lime-500 scale-105' : 'border-zinc-700'}`}>
+                <p className="text-white text-center text-lg font-black italic uppercase tracking-tight">
+                  {isAnalyzing && !isSpeaking ? "Analyzing..." : feedback}
+                </p>
+             </div>
+          </div>
+        </div>
+      </div>
+>>>>>>> 6416803
     </div>
   );
 };
