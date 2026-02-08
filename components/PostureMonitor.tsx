@@ -1,8 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
-const GEMINI_API_KEY = "AIzaSyDBAMQVeCbWgaQxzggJyYTlU2kUebIHjDc";
-
 interface PostureMonitorProps {
   onBack: () => void;
 }
@@ -71,33 +69,31 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     };
   }, []);
 
-const playCoachingVoice = async (text: string) => {
+  const playCoachingVoice = async (text: string) => {
     if (isMuted || !audioContextRef.current) return;
 
+    // Handle browser autoplay policies
     if (audioContextRef.current.state === 'suspended') {
       await audioContextRef.current.resume();
     }
 
-    const ai = new GoogleGenAI(GEMINI_API_KEY);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     try {
       setIsSpeaking(true);
-      
-      // FIX: Model ko pehle initialize karna padta hai
-      const model = ai.getGenerativeModel({ model: "gemini-2.5-flash-preview-tts" });
-      
-      const response = await model.generateContent({
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash-preview-tts",
         contents: [{ parts: [{ text: `Speak as an encouraging gym coach: ${text}` }] }],
-        generationConfig: { 
+        config: {
           responseModalities: ['AUDIO'],
           speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: 'Kore' }, 
+            },
           },
         },
       });
 
-      // FIX: Candidates nikalne ka sahi path
-      const base64Audio = response.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      
+      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (base64Audio) {
         const audioBuffer = await decodeAudioData(
           decodeBase64(base64Audio),
@@ -120,7 +116,7 @@ const playCoachingVoice = async (text: string) => {
     }
   };
 
-const analyzeFrame = async () => {
+  const analyzeFrame = async () => {
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
     
     setIsAnalyzing(true);
@@ -130,21 +126,19 @@ const analyzeFrame = async () => {
     ctx.drawImage(videoRef.current, 0, 0, 400, 300);
     const base64Image = canvasRef.current.toDataURL('image/jpeg').split(',')[1];
 
-    const ai = new GoogleGenAI(GEMINI_API_KEY);
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     try {
-      // FIX: Model ko initialize karo
-      const model = ai.getGenerativeModel({ model: "gemini-3-flash-preview" });
-      
-      const response = await model.generateContent({
-        contents: [{ // contents array ke andar hona chahiye
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: {
           parts: [
             { text: "Act as a fitness coach. Analyze this image. Check the user's posture, form, and alignment. Provide a 1-sentence correction or high-energy confirmation. Speak directly to the user. Keep it under 15 words." },
             { inlineData: { mimeType: 'image/jpeg', data: base64Image } }
           ]
-        }]
+        }
       });
       
-      const newFeedback = response.response.text() || "Perfect form, keep going!";
+      const newFeedback = response.text || "Perfect form, keep going!";
       setFeedback(newFeedback);
       await playCoachingVoice(newFeedback);
     } catch (err) {
