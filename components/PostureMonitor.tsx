@@ -1,11 +1,15 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
+// 1. GLOBAL API INIT
+const API_KEY = "AIzaSyDBAMQVeCbWgaQxzggJyYTlU2kUebIHjDc"; 
+const genAI = new GoogleGenAI(API_KEY);
+
 interface PostureMonitorProps {
   onBack: () => void;
 }
 
-// Helper for Base64 decoding
+// --- HELPERS (No Changes, they are perfect) ---
 function decodeBase64(base64: string) {
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -16,14 +20,12 @@ function decodeBase64(base64: string) {
   return bytes;
 }
 
-// Helper for PCM Audio Decoding
 async function decodeAudioData(
   data: Uint8Array,
   ctx: AudioContext,
   sampleRate: number,
   numChannels: number,
 ): Promise<AudioBuffer> {
-  // Use byteOffset and length to ensure alignment in memory
   const dataInt16 = new Int16Array(data.buffer, data.byteOffset, data.length / 2);
   const frameCount = dataInt16.length / numChannels;
   const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
@@ -41,59 +43,75 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  
   const [feedback, setFeedback] = useState("Align your body in the frame...");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
+  // 1. SETUP CAMERA & AUDIO
   useEffect(() => {
     async function setupCamera() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-        if (videoRef.current) videoRef.current.srcObject = stream;
+        // Fix: Request specific resolution for stability
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'user',
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          } 
+        });
         
-        // AudioContext is better initialized on user gesture, but we prep it here
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        
         if (!audioContextRef.current) {
           audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
         }
       } catch (err) {
         console.error("Camera access denied", err);
+        setFeedback("Camera permission denied. Please allow access.");
       }
     }
     setupCamera();
     
     return () => {
+      // Cleanup tracks
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
       if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
         audioContextRef.current.close();
       }
     };
   }, []);
 
+  // 2. TTS FUNCTION
   const playCoachingVoice = async (text: string) => {
-    if (isMuted || !audioContextRef.current) return;
+    if (isMuted || !audioContextRef.current || isSpeaking) return;
 
-    // Handle browser autoplay policies
     if (audioContextRef.current.state === 'suspended') {
       await audioContextRef.current.resume();
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     try {
       setIsSpeaking(true);
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash-preview-tts",
-        contents: [{ parts: [{ text: `Speak as an encouraging gym coach: ${text}` }] }],
-        config: {
-          responseModalities: ['AUDIO'],
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+      
+      const result = await model.generateContent({
+        contents: [{ parts: [{ text: `Speak as an energetic gym coach. Say exactly this: "${text}"` }] }],
+        generationConfig: {
+          responseModalities: ["AUDIO"],
           speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Kore' }, 
-            },
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
           },
         },
       });
 
-      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      const base64Audio = result.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      
       if (base64Audio) {
         const audioBuffer = await decodeAudioData(
           decodeBase64(base64Audio),
@@ -116,31 +134,46 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     }
   };
 
+  // 3. VISION ANALYSIS FUNCTION
   const analyzeFrame = async () => {
+    // Safety: Check if video is actually ready
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
+    if (videoRef.current.readyState !== 4) return; 
     
     setIsAnalyzing(true);
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
 
+    // Draw frame
     ctx.drawImage(videoRef.current, 0, 0, 400, 300);
-    const base64Image = canvasRef.current.toDataURL('image/jpeg').split(',')[1];
+    const base64Image = canvasRef.current.toDataURL('image/jpeg', 0.8).split(',')[1];
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: {
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      const result = await model.generateContent({
+        contents: [{
           parts: [
-            { text: "Act as a fitness coach. Analyze this image. Check the user's posture, form, and alignment. Provide a 1-sentence correction or high-energy confirmation. Speak directly to the user. Keep it under 15 words." },
+            { text: "You are a fitness coach. Look at this person. Give a 1-sentence correction about their form or a compliment. Keep it short (max 10 words). Direct address." },
             { inlineData: { mimeType: 'image/jpeg', data: base64Image } }
           ]
-        }
+        }]
       });
       
-      const newFeedback = response.text || "Perfect form, keep going!";
+      // Safety: Handle Text Extraction safely
+      let newFeedback = "Keep moving!";
+      if (result.response.text) {
+          try {
+             newFeedback = result.response.text();
+          } catch (e) {
+             // Fallback if .text() fails
+             newFeedback = result.response.candidates?.[0]?.content?.parts?.[0]?.text || "Good form!";
+          }
+      }
+      
       setFeedback(newFeedback);
       await playCoachingVoice(newFeedback);
+      
     } catch (err) {
       console.error("Analysis Error:", err);
     } finally {
@@ -148,13 +181,15 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     }
   };
 
+  // 4. LOOP LOOP
   useEffect(() => {
-  const interval = setInterval(analyzeFrame, 12000); // 12 seconds
-  return () => clearInterval(interval);
-}, [isSpeaking, isMuted]);
+    const interval = setInterval(analyzeFrame, 12000); // 12 Seconds loop
+    return () => clearInterval(interval);
+  }, [isSpeaking, isMuted]);
 
   return (
     <div className="fixed inset-0 bg-zinc-950 z-50 flex flex-col p-6 overflow-hidden">
+      {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
         <button onClick={onBack} className="text-zinc-400 hover:text-white flex items-center gap-2 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -171,12 +206,13 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
              )}
            </button>
-           <span className="bg-lime-400/10 text-lime-400 text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-lime-400/20 shadow-lg shadow-lime-400/5">
+           <span className="bg-lime-400/10 text-lime-400 text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-lime-400/20">
             Vision AI Active
           </span>
         </div>
       </div>
 
+      {/* MAIN VIEW */}
       <div className="flex-1 flex flex-col items-center justify-center gap-8">
         <div className="relative w-full max-w-2xl aspect-video bg-zinc-900 rounded-[40px] overflow-hidden border border-zinc-800 shadow-[0_0_100px_rgba(0,0,0,0.5)]">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
