@@ -98,9 +98,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
 
     try {
       setIsSpeaking(true);
-      // NOTE: Using gemini-1.5-flash for everything to ensure browser compatibility
-      // If you specifically need 2.0-flash-exp, ensure your API key has access to it.
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+      const model = genAI.getGenerativeModel({ model: "models/gemini-2.0-flash-exp" });
       
       const result = await model.generateContent({
         contents: [{ parts: [{ text: `Speak as an energetic gym coach. Say exactly this: "${text}"` }] }],
@@ -150,8 +148,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     const base64Image = canvasRef.current.toDataURL('image/jpeg', 0.8).split(',')[1];
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      
+      const model = genAI.getGenerativeModel({ model: "models/gemini-1.5-flash" });
       const result = await model.generateContent({
         contents: [{
           parts: [
