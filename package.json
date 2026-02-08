@@ -15,7 +15,12 @@
     "@capacitor/ios": "^8.0.2",
     "@capawesome/capacitor-file-picker": "^8.0.1",
     "@google/generative-ai": "^0.24.1",
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/drawing_utils": "^0.3.1675466124",
+    "@mediapipe/pose": "^0.5.1675469404",
     "@tailwindcss/postcss": "^4.1.18",
+    "@tensorflow/tfjs-converter": "^4.22.0",
+    "@tensorflow/tfjs-core": "^4.22.0",
     "firebase": "^12.8.0",
     "react": "19.0.0",
     "react-dom": "19.0.0"
