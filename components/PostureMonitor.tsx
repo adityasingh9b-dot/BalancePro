@@ -1,24 +1,13 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-<<<<<<< HEAD
-import { GoogleGenAI } from "@google/genai";
-
-// Vite-friendly initialization
-const ai = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY || "YOUR_FALLBACK_KEY");
-
-=======
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
->>>>>>> 6416803
 interface PostureMonitorProps {
   onBack: () => void;
 }
 
-<<<<<<< HEAD
-=======
 // Global variable to survive React's Strict Mode / Re-mounts
 let globalLastRequestTime = 0;
 
->>>>>>> 6416803
 // --- UTILS ---
 function decodeBase64(base64: string) {
   const binaryString = atob(base64);
@@ -44,9 +33,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const genAIInstanceRef = useRef<GoogleGenerativeAI | null>(null);
-  
-  // Ref to hold the latest analyze function for setInterval
-  const analyzeRef = useRef<() => void>();
+  const analyzeRef = useRef<() => void>(undefined);
 
   if (!genAIInstanceRef.current) {
     const KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -58,58 +45,36 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
 
   const [feedback, setFeedback] = useState("Coach is watching...");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false); // Fixed missing state
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
     async function setupCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
-<<<<<<< HEAD
-          video: { facingMode: 'user' },
-          audio: false 
-        });
-        if (videoRef.current) videoRef.current.srcObject = stream;
-        
-=======
           video: { facingMode: 'user', width: 640, height: 480 } 
         });
         if (videoRef.current) videoRef.current.srcObject = stream;
->>>>>>> 6416803
         if (!audioContextRef.current) {
           audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
         }
       } catch (err) {
-<<<<<<< HEAD
-        console.error("Camera access denied.", err);
-=======
         setFeedback("Camera enable karo bhai!");
->>>>>>> 6416803
       }
     }
     setupCamera();
     return () => { audioContextRef.current?.close(); };
   }, []);
 
-<<<<<<< HEAD
-  const playCoachingVoice = async (text: string) => {
-    if (isMuted || !audioContextRef.current) return;
-=======
   const playCoachingVoice = useCallback(async (text: string) => {
     const aiInstance = genAIInstanceRef.current;
     if (isMuted || !audioContextRef.current || !aiInstance) return;
->>>>>>> 6416803
     if (audioContextRef.current.state === 'suspended') await audioContextRef.current.resume();
 
     try {
       setIsSpeaking(true);
-<<<<<<< HEAD
-      const model = ai.getGenerativeModel({ model: "gemini-2.5-flash-preview-tts" });
-      const response = await model.generateContent({
-=======
       const model = aiInstance.getGenerativeModel({ model: "gemini-2.0-flash" }, { apiVersion: "v1beta" });
       const result = await model.generateContent({
->>>>>>> 6416803
         contents: [{ role: 'user', parts: [{ text: `Speak as Coach Nitesh (hardcore Indian gym coach) in Hinglish: ${text}` }] }],
         generationConfig: {
           //@ts-ignore
@@ -118,12 +83,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         },
       });
 
-<<<<<<< HEAD
-      const base64Audio = response.response.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-      
-=======
       const base64Audio = result.response.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)?.inlineData?.data;
->>>>>>> 6416803
       if (base64Audio && audioContextRef.current) {
         const audioBuffer = await decodeAudioData(decodeBase64(base64Audio), audioContextRef.current);
         const source = audioContextRef.current.createBufferSource();
@@ -140,49 +100,14 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   }, [isMuted]);
 
   const analyzeFrame = useCallback(async () => {
-<<<<<<< HEAD
-    if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
-=======
     const now = Date.now();
->>>>>>> 6416803
-    
-    // Hard check: survive rapid re-mounts
-    if (now - globalLastRequestTime < 20000) {
-      console.log("⏳ Shield Active: Too soon!");
-      return;
-    }
+    if (now - globalLastRequestTime < 20000) return;
 
-<<<<<<< HEAD
-    ctx.drawImage(videoRef.current, 0, 0, 400, 300);
-    const base64Image = canvasRef.current.toDataURL('image/jpeg', 0.6).split(',')[1];
-
-    try {
-      const model = ai.getGenerativeModel({ model: 'gemini-3-flash-preview' });
-      const response = await model.generateContent([
-        { text: "Act as Coach Nitesh. Analyze the user's gym form in the image. Give a 1-sentence correction or motivation in Hinglish. Max 12 words." },
-        { inlineData: { mimeType: 'image/jpeg', data: base64Image } }
-      ]);
-      
-      const newFeedback = response.response.text();
-      setFeedback(newFeedback);
-      await playCoachingVoice(newFeedback);
-    } catch (err) {
-      console.error("Analysis Error:", err);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  }, [isAnalyzing, isSpeaking]);
-
-  useEffect(() => {
-    const interval = setInterval(analyzeFrame, 8000); 
-    return () => clearInterval(interval);
-  }, [analyzeFrame]);
-=======
     const currentAI = genAIInstanceRef.current;
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking || !currentAI) return;
 
     setIsAnalyzing(true);
-    globalLastRequestTime = now; // Mark request sent
+    globalLastRequestTime = now;
 
     try {
       const canvas = canvasRef.current;
@@ -204,40 +129,24 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         await playCoachingVoice(responseText);
       }
     } catch (err: any) {
-      if (err.message?.includes("429")) setFeedback("Limit hit! Thoda rest karo.");
-      console.error("API Error:", err);
+      if (err.message?.includes("429")) setFeedback("Coach thoda rest kar raha hai...");
     } finally {
       setIsAnalyzing(false);
     }
   }, [isAnalyzing, isSpeaking, playCoachingVoice]);
 
-  // Keep the ref updated with the latest callback
   useEffect(() => {
     analyzeRef.current = analyzeFrame;
   }, [analyzeFrame]);
 
   useEffect(() => {
-    console.log("🚀 Coach Nitesh Engine Started");
-    
-    // Interval only starts ONCE. It calls the latest function via ref.
     const timer = setInterval(() => {
       if (analyzeRef.current) analyzeRef.current();
-    }, 5000); // Check every 5s, globalLastRequestTime handles the 20s gap
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
-    return () => {
-      console.log("🛑 Cleaning Up Interval");
-      clearInterval(timer);
-    };
-  }, []); // EMPTY dependency array is crucial!
->>>>>>> 6416803
-
-  // UI remains identical to your design...
   return (
-<<<<<<< HEAD
-    <div className="fixed inset-0 bg-zinc-950 z-50 flex flex-col p-6 overflow-hidden">
-        {/* Your existing JSX here */}
-        {/* ... (Keep the beautiful UI you built) ... */}
-=======
     <div className="fixed inset-0 bg-black z-50 flex flex-col p-4 font-sans text-white">
       <div className="flex justify-between items-center mb-4">
         <button onClick={onBack} className="text-zinc-500 font-bold text-xs uppercase hover:text-white">
@@ -267,7 +176,8 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
           </div>
         </div>
       </div>
->>>>>>> 6416803
     </div>
   );
 };
+
+export default PostureMonitor;
