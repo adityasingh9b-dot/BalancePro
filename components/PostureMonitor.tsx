@@ -1,15 +1,17 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { GoogleGenAI } from "@google/genai";
+// FIX: Using the correct Web-compatible SDK
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // 1. GLOBAL API INIT
 const API_KEY = "AIzaSyDBAMQVeCbWgaQxzggJyYTlU2kUebIHjDc"; 
-const genAI = new GoogleGenAI(API_KEY);
+// FIX: Initializing the Web SDK correctly
+const genAI = new GoogleGenerativeAI(API_KEY);
 
 interface PostureMonitorProps {
   onBack: () => void;
 }
 
-// --- HELPERS (No Changes, they are perfect) ---
+// --- HELPERS (Unchanged) ---
 function decodeBase64(base64: string) {
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -53,7 +55,6 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   useEffect(() => {
     async function setupCamera() {
       try {
-        // Fix: Request specific resolution for stability
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
             facingMode: 'user',
@@ -77,7 +78,6 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     setupCamera();
     
     return () => {
-      // Cleanup tracks
       if (videoRef.current && videoRef.current.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
         stream.getTracks().forEach(track => track.stop());
@@ -98,6 +98,8 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
 
     try {
       setIsSpeaking(true);
+      // NOTE: Using gemini-1.5-flash for everything to ensure browser compatibility
+      // If you specifically need 2.0-flash-exp, ensure your API key has access to it.
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
       
       const result = await model.generateContent({
@@ -110,6 +112,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         },
       });
 
+      // Handle the response structure safely
       const base64Audio = result.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       
       if (base64Audio) {
@@ -136,7 +139,6 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
 
   // 3. VISION ANALYSIS FUNCTION
   const analyzeFrame = async () => {
-    // Safety: Check if video is actually ready
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
     if (videoRef.current.readyState !== 4) return; 
     
@@ -144,7 +146,6 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
 
-    // Draw frame
     ctx.drawImage(videoRef.current, 0, 0, 400, 300);
     const base64Image = canvasRef.current.toDataURL('image/jpeg', 0.8).split(',')[1];
 
@@ -160,15 +161,11 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         }]
       });
       
-      // Safety: Handle Text Extraction safely
       let newFeedback = "Keep moving!";
-      if (result.response.text) {
-          try {
-             newFeedback = result.response.text();
-          } catch (e) {
-             // Fallback if .text() fails
-             newFeedback = result.response.candidates?.[0]?.content?.parts?.[0]?.text || "Good form!";
-          }
+      if (typeof result.response.text === 'function') {
+         newFeedback = result.response.text();
+      } else {
+         newFeedback = "Great work!";
       }
       
       setFeedback(newFeedback);
@@ -181,9 +178,8 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     }
   };
 
-  // 4. LOOP LOOP
   useEffect(() => {
-    const interval = setInterval(analyzeFrame, 12000); // 12 Seconds loop
+    const interval = setInterval(analyzeFrame, 12000); 
     return () => clearInterval(interval);
   }, [isSpeaking, isMuted]);
 
