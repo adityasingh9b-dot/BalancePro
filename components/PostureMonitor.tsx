@@ -1,22 +1,52 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
+const GEMINI_API_KEY = "AIzaSyDBAMQVeCbWgaQxzggJyYTlU2kUebIHjDc";
+
 interface PostureMonitorProps {
   onBack: () => void;
 }
 
+// Helper for Base64 decoding
+function decodeBase64(base64: string) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
 
+// Helper for PCM Audio Decoding
+async function decodeAudioData(
+  data: Uint8Array,
+  ctx: AudioContext,
+  sampleRate: number,
+  numChannels: number,
+): Promise<AudioBuffer> {
+  // Use byteOffset and length to ensure alignment in memory
+  const dataInt16 = new Int16Array(data.buffer, data.byteOffset, data.length / 2);
+  const frameCount = dataInt16.length / numChannels;
+  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
+  for (let channel = 0; channel < numChannels; channel++) {
+    const channelData = buffer.getChannelData(channel);
+    for (let i = 0; i < frameCount; i++) {
+      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    }
+  }
+  return buffer;
+}
 
 const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const [feedback, setFeedback] = useState("Align your body in the frame...");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
- const [isMuted, setIsMuted] = useState(false);
-  const [isListening, setIsListening] = useState(false); // Ye line add karo
-
-
+  const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
     async function setupCamera() {
@@ -24,107 +54,108 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
         if (videoRef.current) videoRef.current.srcObject = stream;
         
-        
+        // AudioContext is better initialized on user gesture, but we prep it here
+        if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        }
       } catch (err) {
         console.error("Camera access denied", err);
       }
     }
     setupCamera();
-
+    
+    return () => {
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+    };
   }, []);
 
+const playCoachingVoice = async (text: string) => {
+    if (isMuted || !audioContextRef.current) return;
 
-// 1. Voice Feature (Simple & Reliable)
-  const speak = (text: string) => {
-    if (isMuted || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    window.speechSynthesis.speak(utterance);
+    if (audioContextRef.current.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    const ai = new GoogleGenAI(GEMINI_API_KEY);
+    try {
+      setIsSpeaking(true);
+      
+      // FIX: Model ko pehle initialize karna padta hai
+      const model = ai.getGenerativeModel({ model: "gemini-2.5-flash-preview-tts" });
+      
+      const response = await model.generateContent({
+        contents: [{ parts: [{ text: `Speak as an encouraging gym coach: ${text}` }] }],
+        generationConfig: { 
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
+          },
+        },
+      });
+
+      // FIX: Candidates nikalne ka sahi path
+      const base64Audio = response.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      
+      if (base64Audio) {
+        const audioBuffer = await decodeAudioData(
+          decodeBase64(base64Audio),
+          audioContextRef.current,
+          24000,
+          1,
+        );
+        
+        const source = audioContextRef.current.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContextRef.current.destination);
+        source.onended = () => setIsSpeaking(false);
+        source.start();
+      } else {
+        setIsSpeaking(false);
+      }
+    } catch (err) {
+      console.error("TTS Error:", err);
+      setIsSpeaking(false);
+    }
   };
+
 const analyzeFrame = async () => {
     if (!videoRef.current || !canvasRef.current || isAnalyzing || isSpeaking) return;
     
-    const key = "AIzaSyClOCKVjhXSaqNiw4bTRZjnRYdSK5njxHs"; // Make sure this key is active
     setIsAnalyzing(true);
-
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
-    
-    canvasRef.current.width = 640;
-    canvasRef.current.height = 480;
-    ctx.drawImage(videoRef.current, 0, 0, 640, 480);
-    const base64Image = canvasRef.current.toDataURL('image/jpeg', 0.7).split(',')[1];
 
+    ctx.drawImage(videoRef.current, 0, 0, 400, 300);
+    const base64Image = canvasRef.current.toDataURL('image/jpeg').split(',')[1];
+
+    const ai = new GoogleGenAI(GEMINI_API_KEY);
     try {
-      // STABLE URL CHANGE: v1 instead of v1beta, removed -latest
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: "You are Coach Nitesh, a hardcore Indian gym trainer. Identify the person's exercise. If back is rounded or form loose, SHOUT correction in Hinglish (max 15 words). If perfect, say 'Shaandaar!'" },
-              { inlineData: { mimeType: "image/jpeg", data: base64Image } }
-            ]
-          }]
-        })
+      // FIX: Model ko initialize karo
+      const model = ai.getGenerativeModel({ model: "gemini-3-flash-preview" });
+      
+      const response = await model.generateContent({
+        contents: [{ // contents array ke andar hona chahiye
+          parts: [
+            { text: "Act as a fitness coach. Analyze this image. Check the user's posture, form, and alignment. Provide a 1-sentence correction or high-energy confirmation. Speak directly to the user. Keep it under 15 words." },
+            { inlineData: { mimeType: 'image/jpeg', data: base64Image } }
+          ]
+        }]
       });
-
-      const data = await response.json();
-      console.log("Coach Nitesh Brain:", data); 
-
-      if (data.error) {
-          console.error("Critical API Error:", data.error.message);
-          setFeedback("Oye! Google ka server nakhre kar raha hai.");
-          return;
-      }
-
-      const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (aiReply) {
-        setFeedback(aiReply);
-        speak(aiReply);
-      }
+      
+      const newFeedback = response.response.text() || "Perfect form, keep going!";
+      setFeedback(newFeedback);
+      await playCoachingVoice(newFeedback);
     } catch (err) {
-      console.error("Coach Brain Fade:", err);
+      console.error("Analysis Error:", err);
     } finally {
       setIsAnalyzing(false);
     }
-};
+  };
 
-const startVoiceChat = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return alert("Mic not supported");
-
-    const recognition = new SpeechRecognition();
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-
-    recognition.onresult = async (event: any) => {
-      const msg = event.results[0][0].transcript;
-      const key = "AIzaSyClOCKVjhXSaqNiw4bTRZjnRYdSK5njxHs";
-      setFeedback(`You: ${msg}`);
-      
-      try {
-        // STABLE URL CHANGE
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: `User says: ${msg}. Reply as Coach Nitesh (Indian Gym Trainer) in 1 short sentence.` }] }]
-            })
-        });
-        const data = await response.json();
-        const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Bhai, awaaz saaf nahi aayi!";
-        setFeedback(reply);
-        speak(reply);
-      } catch (e) { console.error("Mic Fetch Error:", e); }
-    };
-    recognition.start();
-};
   useEffect(() => {
-  const interval = setInterval(analyzeFrame, 13000);
+  const interval = setInterval(analyzeFrame, 12000); // 12 seconds
   return () => clearInterval(interval);
 }, [isSpeaking, isMuted]);
 
@@ -132,21 +163,10 @@ const startVoiceChat = () => {
     <div className="fixed inset-0 bg-zinc-950 z-50 flex flex-col p-6 overflow-hidden">
       <div className="flex justify-between items-center mb-6">
         <button onClick={onBack} className="text-zinc-400 hover:text-white flex items-center gap-2 transition-colors">
-        
-        
-        
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           <span className="text-[10px] uppercase font-black tracking-widest">Exit AI Vision</span>
         </button>
         <div className="flex items-center gap-4">
-  {/* Ye Mic button add karo */}
-  <button 
-    onClick={startVoiceChat} 
-    className={`p-2 rounded-xl border transition-all ${isListening ? 'bg-red-500' : 'border-zinc-800'}`}
-  >
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z"/></svg>
-  </button>
-  
            <button 
              onClick={() => setIsMuted(!isMuted)} 
              className={`p-2 rounded-xl border transition-all ${isMuted ? 'border-red-500/30 text-red-500' : 'border-zinc-800 text-zinc-400'}`}
@@ -166,7 +186,7 @@ const startVoiceChat = () => {
       <div className="flex-1 flex flex-col items-center justify-center gap-8">
         <div className="relative w-full max-w-2xl aspect-video bg-zinc-900 rounded-[40px] overflow-hidden border border-zinc-800 shadow-[0_0_100px_rgba(0,0,0,0.5)]">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
-          <canvas ref={canvasRef} width="640" height="480" className="hidden" />
+          <canvas ref={canvasRef} width="400" height="300" className="hidden" />
           
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 left-0 w-full h-1 bg-lime-400/30 blur-sm animate-scan"></div>
