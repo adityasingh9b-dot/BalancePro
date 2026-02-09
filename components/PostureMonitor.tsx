@@ -26,21 +26,12 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     recognition.interimResults = false;
     recognition.lang = 'hi-IN';
 
-    recognition.onstart = () => {
-      setIsMicOn(true);
-      console.log("🎤 Monitoring Active");
-    };
+    recognition.onstart = () => setIsMicOn(true);
 
     recognition.onresult = (event: any) => {
       const current = event.resultIndex;
       const transcript = event.results[current][0].transcript;
       handleGroqChat(transcript);
-    };
-
-    recognition.onerror = (event: any) => {
-      if (event.error === 'no-speech') return;
-      console.error("Mic Error:", event.error);
-      setIsMicOn(false);
     };
 
     recognition.onend = () => {
@@ -64,7 +55,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
       shouldBeOnRef.current = true;
       try {
         recognitionRef.current?.start();
-        setFeedback("I'm listening. Ask me anything about your fitness!");
+        setFeedback("Main sun raha hoon, apni diet ya workout ke baare mein pucho.");
       } catch (err) { console.error(err); }
     }
   };
@@ -76,18 +67,18 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
 
     const apiKey = import.meta.env.VITE_GROQ_API_KEY;
     
-    // YEH HAI NAYA PROFESSIONAL PROMPT
     const systemPrompt = `
-      You are Coach Nitesh, the AI assistant of Nitesh Tyagi (Founder of BalancePro). 
-      BalancePro is a premier fitness company focused on sustainable health and professional coaching.
-      Your tone: Professional, disciplined, encouraging, and knowledgeable. 
-      Language: Hinglish (Hindi + English) naturally spoken in Indian gyms.
-      Guidelines:
-      1. Strictly NO abusive language or insults.
-      2. Provide scientific yet simple fitness advice.
-      3. If asked about BalancePro, mention it's Nitesh Tyagi's vision for a balanced lifestyle.
-      4. Keep responses short and punchy (Max 25 words).
-      5. Motivate the user to maintain proper form and consistency.
+      You are Coach Nitesh, the expert AI trainer of BalancePro, founded by Nitesh Tyagi.
+      Knowledge: Expert in Strength Training, Diet (Protien, Carbs, Fats), Supplements, and Sustainable Lifestyle.
+      Tone: Professional, highly motivating, and knowledgeable.
+      Language: Hindi/Hinglish.
+      
+      Instructions:
+      1. Give detailed advice on diet and fitness queries.
+      2. Keep responses between 10 to 20 words so they feel complete but fast.
+      3. CRITICAL: Never write digits like '3' or '4'. Always write them as 'teen', 'chaar', 'pandrah' in Hindi/Hinglish.
+      4. If asked about BalancePro, say it's Nitesh Tyagi's platform for professional fitness results.
+      5. Always encourage consistency.
     `;
 
     try {
@@ -110,7 +101,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
       const coachReply = data.choices[0].message.content;
       speakResponse(coachReply);
     } catch (err) {
-      setFeedback("Connection slow hai, ek minute rukiye.");
+      setFeedback("Network slow hai, ek minute rukiye.");
       if (shouldBeOnRef.current) recognitionRef.current?.start();
     } finally {
       setIsProcessing(false);
@@ -120,8 +111,8 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   const speakResponse = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'hi-IN';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0; // Professional clear voice
+    utterance.rate = 0.95; // Slightly slower for better clarity
+    utterance.pitch = 1.0;
 
     utterance.onstart = () => {
       setIsSpeaking(true);
@@ -144,37 +135,50 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         ← Close Session
       </button>
 
-      {/* Modern Visualizer */}
-      <div className={`w-64 h-64 rounded-full flex items-center justify-center relative transition-all duration-500 ${isMicOn ? 'bg-lime-500/10 scale-105 border-lime-500/30' : 'bg-zinc-900 border-zinc-800'} border-2`}>
+      {/* Visualizer with Logo */}
+      <div className={`w-72 h-72 rounded-full flex items-center justify-center relative transition-all duration-500 ${isMicOn ? 'bg-lime-500/10 scale-105 border-lime-500/30' : 'bg-zinc-900 border-zinc-800'} border-2`}>
         {isMicOn && <div className="absolute inset-0 rounded-full bg-lime-500 animate-ping opacity-10"></div>}
-        {isSpeaking && <div className="absolute inset-0 rounded-full bg-blue-500 animate-pulse opacity-20 shadow-[0_0_60px_rgba(59,130,246,0.2)]"></div>}
+        {isSpeaking && <div className="absolute inset-0 rounded-full bg-blue-500 animate-pulse opacity-20 shadow-[0_0_80px_rgba(59,130,246,0.3)]"></div>}
         
         <div className="flex flex-col items-center">
-            <span className="text-6xl mb-2">{isSpeaking ? "🗣️" : isMicOn ? "🎧" : "🧘"}</span>
-            <span className="text-[10px] font-bold tracking-[0.3em] text-zinc-500 uppercase">BalancePro</span>
+            {/* Logo Image */}
+            <img 
+              src="assets/logo.png" 
+              alt="BalancePro" 
+              className={`w-32 h-32 object-contain mb-4 transition-opacity duration-300 ${isSpeaking ? 'opacity-100' : 'opacity-80'}`}
+              onError={(e) => {
+                // Fallback if image path is wrong
+                (e.target as any).src = "https://via.placeholder.com/150?text=BP";
+              }}
+            />
+            <span className="text-[12px] font-black tracking-[0.4em] text-lime-500 uppercase">BalancePro</span>
         </div>
       </div>
 
-      {/* Info Area */}
-      <div className="mt-12 text-center max-w-sm h-32 flex flex-col justify-center">
-        <h2 className="text-lime-500 font-black uppercase tracking-widest text-[10px] mb-2">Expert Assistant</h2>
-        <p className={`text-lg font-medium leading-tight transition-all duration-300 ${isSpeaking ? 'text-white' : 'text-zinc-400 italic'}`}>
-          {isProcessing ? "Analyzing query..." : feedback}
+      {/* Feedback Area */}
+      <div className="mt-12 text-center max-w-sm h-40 flex flex-col justify-center px-4">
+        <h2 className="text-zinc-600 font-black uppercase tracking-widest text-[10px] mb-3">Nitesh Tyagi's AI</h2>
+        <p className={`text-xl font-bold italic leading-snug transition-all duration-300 ${isSpeaking ? 'text-white' : 'text-zinc-500'}`}>
+          {isProcessing ? "Coach is calculating..." : feedback}
         </p>
       </div>
 
-      {/* Professional Toggle */}
-      <div className="mt-10">
+      {/* Control Button */}
+      <div className="mt-8">
         <button
           onClick={toggleMic}
-          className={`w-20 h-20 rounded-full flex items-center justify-center transition-all shadow-2xl ${isMicOn ? 'bg-lime-600 border-4 border-lime-400 shadow-lime-500/20' : 'bg-white text-black hover:scale-105'}`}
+          className={`w-24 h-24 rounded-full flex flex-col items-center justify-center transition-all shadow-2xl ${isMicOn ? 'bg-lime-600 border-4 border-lime-400' : 'bg-white text-black hover:scale-110'}`}
         >
-          <span className="font-black text-xs uppercase tracking-widest">{isMicOn ? 'Stop' : 'Start'}</span>
+          <span className="font-black text-[10px] uppercase tracking-widest">{isMicOn ? 'Stop' : 'Start'}</span>
+          <span className="font-bold text-[10px] italic">COACH</span>
         </button>
       </div>
       
-      <div className="absolute bottom-10 opacity-20 text-[8px] font-bold tracking-[0.5em] uppercase">
-        Sustainability • Consistency • Balance
+      <div className="absolute bottom-10 flex flex-col items-center gap-2 opacity-30">
+        <div className="h-[1px] w-12 bg-lime-500"></div>
+        <p className="text-[8px] font-bold tracking-[0.5em] uppercase text-center">
+          Sustainable Health • Professional Coaching
+        </p>
       </div>
     </div>
   );
