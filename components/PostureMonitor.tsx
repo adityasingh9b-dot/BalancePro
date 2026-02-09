@@ -45,6 +45,13 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     recognitionRef.current = recognition;
   }, [isSpeaking, isProcessing]);
 
+  const handleExit = () => {
+    shouldBeOnRef.current = false;
+    recognitionRef.current?.stop();
+    window.speechSynthesis.cancel();
+    onBack();
+  };
+
   const toggleMic = () => {
     if (isMicOn) {
       shouldBeOnRef.current = false;
@@ -55,7 +62,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
       shouldBeOnRef.current = true;
       try {
         recognitionRef.current?.start();
-        setFeedback("Main sun raha hoon... Diet ya workout se related kuch bhi puchiye.");
+        setFeedback("Main sun raha hoon...");
       } catch (err) { console.error(err); }
     }
   };
@@ -68,15 +75,11 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     const apiKey = import.meta.env.VITE_GROQ_API_KEY;
     
     const systemPrompt = `
-      You are Coach Nitesh, the expert AI trainer of BalancePro, founded by Nitesh Tyagi.
-      
-      STRICT RULES:
-      1. LANGUAGE: Use Hinglish (mix of Hindi and English) written in LATIN SCRIPT (English alphabet). 
-         Example: "Aapki diet mein protein ka hona bahut zaroori hai" instead of Hindi script.
-      2. LENGTH: Give detailed and expert responses. Minimum 25 words, maximum 50 words. Don't be too brief.
-      3. TONE: Professional, motivating, and friendly gym coach vibe.
-      4. NUMBERS: Never use digits like '5' or '10'. Always write them as words like 'paanch', 'dus', 'pachees'.
-      5. BRAND: Mention BalancePro and the importance of consistency.
+      You are Coach Nitesh, expert trainer of BalancePro.
+      Respond in LATIN SCRIPT Hinglish (English alphabet).
+      Detailed response (25-50 words). 
+      No digits, use words like 'dus' or 'bees'.
+      Focus on BalancePro consistency.
     `;
 
     try {
@@ -99,7 +102,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
       const coachReply = data.choices[0].message.content;
       speakResponse(coachReply);
     } catch (err) {
-      setFeedback("Network thoda slow hai, please ek baar phir try karein.");
+      setFeedback("Network slow hai, try again.");
       if (shouldBeOnRef.current) recognitionRef.current?.start();
     } finally {
       setIsProcessing(false);
@@ -108,10 +111,8 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
 
   const speakResponse = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
-    // Note: hi-IN can read Latin Hinglish text quite well
     utterance.lang = 'hi-IN';
     utterance.rate = 1.0; 
-    utterance.pitch = 1.0;
 
     utterance.onstart = () => {
       setIsSpeaking(true);
@@ -129,51 +130,70 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 text-white flex flex-col items-center justify-center p-6 font-sans">
-      <button onClick={onBack} className="absolute top-10 left-6 text-zinc-500 font-bold text-[10px] tracking-widest uppercase hover:text-white transition-colors">
-        ← Exit Session
-      </button>
-
-      {/* Visualizer Circle */}
-      <div className={`w-72 h-72 rounded-full flex items-center justify-center relative transition-all duration-500 ${isMicOn ? 'bg-lime-500/10 scale-105 border-lime-500/30' : 'bg-zinc-900 border-zinc-800'} border-2`}>
-        {isMicOn && <div className="absolute inset-0 rounded-full bg-lime-500 animate-ping opacity-10"></div>}
-        {isSpeaking && <div className="absolute inset-0 rounded-full bg-blue-500 animate-pulse opacity-20 shadow-[0_0_80px_rgba(59,130,246,0.3)]"></div>}
-        
-        <div className="flex flex-col items-center px-4 text-center">
-            <img 
-              src="/assets/icon.png" 
-              alt="BalancePro" 
-              className={`w-32 h-32 object-contain mb-4 transition-all duration-500 ${isSpeaking ? 'scale-110' : 'scale-100 opacity-90'}`}
-              onError={(e) => { (e.target as any).src = "https://via.placeholder.com/150?text=BP"; }}
-            />
-            <span className="text-[12px] font-black tracking-[0.4em] text-lime-500 uppercase">BalancePro</span>
+    <div className="fixed inset-0 bg-zinc-950 text-white flex flex-col font-sans overflow-hidden">
+      
+      {/* 1. TOP HEADER (Fixed height to avoid overlap) */}
+      <div className="w-full p-6 flex items-center justify-between z-50">
+        <button 
+          onClick={handleExit} 
+          className="flex items-center gap-3 group active:scale-95 transition-all"
+        >
+          <div className="w-10 h-10 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-black shadow-lg">
+            <span className="text-xl">←</span>
+          </div>
+          <span className="text-zinc-500 font-bold text-[10px] tracking-widest uppercase group-hover:text-white">
+            Go Back
+          </span>
+        </button>
+        <div className="text-[10px] font-black tracking-[0.3em] text-lime-500 uppercase opacity-50">
+          Coach AI v1.0
         </div>
       </div>
 
-      {/* Dynamic Hinglish Feedback Area */}
-      <div className="mt-12 text-center max-w-md h-56 flex flex-col justify-center px-6">
-        <h2 className="text-zinc-600 font-black uppercase tracking-widest text-[10px] mb-3">Coach Nitesh AI</h2>
-        <p className={`text-lg font-semibold italic leading-relaxed transition-all duration-300 ${isSpeaking ? 'text-white' : 'text-zinc-400'}`}>
-          {isProcessing ? "Analyzing your query..." : feedback}
-        </p>
-      </div>
+      {/* 2. MAIN CONTENT (Flexible area) */}
+      <div className="flex-1 flex flex-col items-center justify-evenly px-6 pb-12">
+        
+        {/* Visualizer Circle */}
+        <div className={`w-64 h-64 md:w-80 md:h-80 rounded-full flex items-center justify-center relative transition-all duration-500 ${isMicOn ? 'bg-lime-500/10 scale-105 border-lime-500/30' : 'bg-zinc-900 border-zinc-800'} border-2`}>
+          {isMicOn && <div className="absolute inset-0 rounded-full bg-lime-500 animate-ping opacity-10"></div>}
+          {isSpeaking && <div className="absolute inset-0 rounded-full bg-blue-500 animate-pulse opacity-20 shadow-[0_0_60px_rgba(59,130,246,0.3)]"></div>}
+          
+          <div className="flex flex-col items-center px-4 text-center">
+              <img 
+                src="/assets/logo1.jpeg" 
+                alt="BalancePro" 
+                className={`w-32 md:w-40 h-auto object-contain mb-3 rounded-2xl shadow-2xl transition-all duration-500 ${isSpeaking ? 'scale-110' : 'scale-100 opacity-90'}`}
+                onError={(e) => { (e.target as any).src = "https://via.placeholder.com/150?text=BP"; }}
+              />
+              <span className="text-[10px] md:text-[12px] font-black tracking-[0.4em] text-lime-500 uppercase">BalancePro</span>
+          </div>
+        </div>
 
-      {/* Start/Stop Button */}
-      <div className="mt-6">
-        <button
-          onClick={toggleMic}
-          className={`w-24 h-24 rounded-full flex flex-col items-center justify-center transition-all shadow-2xl ${isMicOn ? 'bg-lime-600 border-4 border-lime-400' : 'bg-white text-black hover:scale-110 active:scale-95'}`}
-        >
-          <span className="font-black text-[10px] uppercase tracking-widest">{isMicOn ? 'Stop' : 'Start'}</span>
-          <span className="font-bold text-[10px] italic">CONSULT</span>
-        </button>
+        {/* Feedback Display (Height fixed to prevent jumping) */}
+        <div className="w-full max-w-md text-center flex flex-col justify-center min-h-[140px]">
+          <h2 className="text-zinc-600 font-black uppercase tracking-widest text-[9px] mb-4">Coach Nitesh AI</h2>
+          <p className={`text-lg md:text-xl font-semibold italic leading-snug transition-all duration-300 ${isSpeaking ? 'text-white' : 'text-zinc-400'}`}>
+            {isProcessing ? "Analyzing..." : feedback}
+          </p>
+        </div>
+
+        {/* 3. CONTROL AREA */}
+        <div className="flex flex-col items-center">
+          <button
+            onClick={toggleMic}
+            className={`w-24 h-24 rounded-full flex flex-col items-center justify-center transition-all shadow-2xl ${isMicOn ? 'bg-lime-600 border-4 border-lime-400' : 'bg-white text-black hover:scale-110 active:scale-90'}`}
+          >
+            <span className="font-black text-[10px] uppercase tracking-widest">{isMicOn ? 'Stop' : 'Start'}</span>
+            <span className="font-bold text-[9px] italic">CONSULT</span>
+          </button>
+        </div>
       </div>
       
-      {/* Branding Footer */}
-      <div className="absolute bottom-10 flex flex-col items-center gap-2 opacity-30">
-        <div className="h-[1px] w-12 bg-lime-500"></div>
-        <p className="text-[8px] font-bold tracking-[0.5em] uppercase text-center">
-          Sustainability • Consistency • Balance
+      {/* 4. FOOTER (Hidden on small screens if needed, or low opacity) */}
+      <div className="w-full pb-8 flex flex-col items-center gap-2 opacity-20">
+        <div className="h-[1px] w-8 bg-lime-500"></div>
+        <p className="text-[7px] font-bold tracking-[0.5em] uppercase">
+          Sustainability • Consistency
         </p>
       </div>
     </div>

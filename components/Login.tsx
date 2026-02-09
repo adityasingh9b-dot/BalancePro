@@ -80,7 +80,7 @@ return (
 <img 
   src="/assets/logo1.jpeg" 
   alt="BalancePro" 
-  className="w-32 h-32" 
+  className="w-auto h-20 md:h-24 object-contain"
 />
         </div>
         <p className="text-slate-400 text-[9px] font-bold uppercase tracking-[0.4em] opacity-80"> Contact Nitesh for Registration </p>
