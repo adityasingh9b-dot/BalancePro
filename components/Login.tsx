@@ -78,7 +78,7 @@ return (
         <div className="h-16 md:h-20 flex items-center justify-center mb-6">
          
 <img 
-  src="/assets/icon.png" 
+  src="/assets/logo1.jpeg" 
   alt="BalancePro" 
   className="w-32 h-32" 
 />
