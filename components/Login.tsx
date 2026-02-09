@@ -77,11 +77,20 @@ return (
         {/* Logo Section */}
         <div className="h-16 md:h-20 flex items-center justify-center mb-6">
          
+<<<<<<< HEAD
 <img 
   src="/assets/logo1.jpeg" 
   alt="BalancePro" 
   className="w-auto h-20 md:h-24 object-contain"
+=======
+<img
+  src="/assets/logo1.jpeg"
+  alt="BalancePro"
+  className="w-auto h-20 md:h-24 object-contain rounded-lg"
+>>>>>>> 6a6f6b26be5a5f53992a79fd597a960b422850f6
 />
+
+
         </div>
         <p className="text-slate-400 text-[9px] font-bold uppercase tracking-[0.4em] opacity-80"> Contact Nitesh for Registration </p>
       </div>
