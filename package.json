@@ -22,6 +22,7 @@
     "@tailwindcss/postcss": "^4.1.18",
     "@tensorflow/tfjs-converter": "^4.22.0",
     "@tensorflow/tfjs-core": "^4.22.0",
+    "capacitor-voice-recorder": "^7.0.6",
     "firebase": "^12.8.0",
     "react": "19.0.0",
     "react-dom": "19.0.0"
