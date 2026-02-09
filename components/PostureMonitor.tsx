@@ -45,6 +45,14 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     recognitionRef.current = recognition;
   }, [isSpeaking, isProcessing]);
 
+  // Function to stop everything before going back
+  const handleExit = () => {
+    shouldBeOnRef.current = false;
+    recognitionRef.current?.stop();
+    window.speechSynthesis.cancel();
+    onBack();
+  };
+
   const toggleMic = () => {
     if (isMicOn) {
       shouldBeOnRef.current = false;
@@ -69,14 +77,12 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     
     const systemPrompt = `
       You are Coach Nitesh, the expert AI trainer of BalancePro, founded by Nitesh Tyagi.
-      
       STRICT RULES:
       1. LANGUAGE: Use Hinglish (mix of Hindi and English) written in LATIN SCRIPT (English alphabet). 
-         Example: "Aapki diet mein protein ka hona bahut zaroori hai" instead of Hindi script.
-      2. LENGTH: Give detailed and expert responses. Minimum 25 words, maximum 50 words. Don't be too brief.
+      2. LENGTH: Give detailed and expert responses. Minimum 25 words, maximum 50 words.
       3. TONE: Professional, motivating, and friendly gym coach vibe.
-      4. NUMBERS: Never use digits like '5' or '10'. Always write them as words like 'paanch', 'dus', 'pachees'.
-      5. BRAND: Mention BalancePro and the importance of consistency.
+      4. NUMBERS: Never use digits like '5'. Write as 'paanch'.
+      5. BRAND: Mention BalancePro consistency.
     `;
 
     try {
@@ -99,7 +105,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
       const coachReply = data.choices[0].message.content;
       speakResponse(coachReply);
     } catch (err) {
-      setFeedback("Network thoda slow hai, please ek baar phir try karein.");
+      setFeedback("Network slow hai, ek baar phir try karein.");
       if (shouldBeOnRef.current) recognitionRef.current?.start();
     } finally {
       setIsProcessing(false);
@@ -108,7 +114,6 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
 
   const speakResponse = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
-    // Note: hi-IN can read Latin Hinglish text quite well
     utterance.lang = 'hi-IN';
     utterance.rate = 1.0; 
     utterance.pitch = 1.0;
@@ -130,8 +135,18 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
 
   return (
     <div className="fixed inset-0 bg-zinc-950 text-white flex flex-col items-center justify-center p-6 font-sans">
-      <button onClick={onBack} className="absolute top-10 left-6 text-zinc-500 font-bold text-[10px] tracking-widest uppercase hover:text-white transition-colors">
-        ← Exit Session
+      
+      {/* 🔙 ENHANCED BACK BUTTON */}
+      <button 
+        onClick={handleExit} 
+        className="absolute top-10 left-6 flex items-center gap-2 group z-50"
+      >
+        <div className="w-10 h-10 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
+          <span className="text-xl">←</span>
+        </div>
+        <span className="text-zinc-500 font-bold text-[10px] tracking-widest uppercase group-hover:text-white transition-colors">
+          Go Back
+        </span>
       </button>
 
       {/* Visualizer Circle */}
@@ -141,16 +156,17 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         
         <div className="flex flex-col items-center px-4 text-center">
             <img 
-              src="/assets/icon.png" 
+              src="/assets/logo1.jpeg" 
               alt="BalancePro" 
-              className={`w-32 h-32 object-contain mb-4 transition-all duration-500 ${isSpeaking ? 'scale-110' : 'scale-100 opacity-90'}`}
+              // ✨ ADDED ROUNDED EDGES (rounded-2xl)
+              className={`w-36 h-auto object-contain mb-4 rounded-2xl shadow-lg transition-all duration-500 ${isSpeaking ? 'scale-110' : 'scale-100 opacity-90'}`}
               onError={(e) => { (e.target as any).src = "https://via.placeholder.com/150?text=BP"; }}
             />
             <span className="text-[12px] font-black tracking-[0.4em] text-lime-500 uppercase">BalancePro</span>
         </div>
       </div>
 
-      {/* Dynamic Hinglish Feedback Area */}
+      {/* Feedback Area */}
       <div className="mt-12 text-center max-w-md h-56 flex flex-col justify-center px-6">
         <h2 className="text-zinc-600 font-black uppercase tracking-widest text-[10px] mb-3">Coach Nitesh AI</h2>
         <p className={`text-lg font-semibold italic leading-relaxed transition-all duration-300 ${isSpeaking ? 'text-white' : 'text-zinc-400'}`}>
@@ -158,7 +174,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         </p>
       </div>
 
-      {/* Start/Stop Button */}
+      {/* Start Button */}
       <div className="mt-6">
         <button
           onClick={toggleMic}
@@ -169,7 +185,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         </button>
       </div>
       
-      {/* Branding Footer */}
+      {/* Footer */}
       <div className="absolute bottom-10 flex flex-col items-center gap-2 opacity-30">
         <div className="h-[1px] w-12 bg-lime-500"></div>
         <p className="text-[8px] font-bold tracking-[0.5em] uppercase text-center">
