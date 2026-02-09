@@ -3,7 +3,6 @@ import { UserProfile, UserRole } from '../types';
 // 1. Mock hatao, asali Firebase lao
 import { db } from '../services/firebaseService'; 
 import { ref, get } from 'firebase/database';
-import logoImg from '../assets/logo1.jpeg';
 
 interface LoginProps {
   onLogin: (user: UserProfile) => void;
@@ -67,7 +66,7 @@ return (
   /* MAIN CONTAINER: Now with Logo1.jpeg as fixed background */
   <div 
     className="min-h-screen flex items-center justify-center p-6 font-sans bg-cover bg-center bg-no-repeat relative"
-    style={{ backgroundImage: `url(${logoImg})` }}
+    style={{ backgroundImage: `url(${'/assets/icon.png'})` }}
   >
     {/* OVERLAY: Dark blue tint taaki piche ka logo form ko disturb na kare */}
     <div className="absolute inset-0 bg-[#081229]/90 backdrop-blur-sm"></div>
@@ -77,11 +76,12 @@ return (
       <div className="text-center mb-10">
         {/* Logo Section */}
         <div className="h-16 md:h-20 flex items-center justify-center mb-6">
-          <img 
-            src={logoImg} 
-            alt="BalancePro" 
-            className="h-full w-auto object-contain rounded-lg"
-          />
+         
+<img 
+  src="/assets/icon.png" 
+  alt="BalancePro" 
+  className="w-32 h-32" 
+/>
         </div>
         <p className="text-slate-400 text-[9px] font-bold uppercase tracking-[0.4em] opacity-80"> Contact Nitesh for Registration </p>
       </div>
