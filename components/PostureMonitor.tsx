@@ -143,7 +143,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         <div className="flex flex-col items-center">
             {/* Logo Image */}
             <img 
-              src="../assets/logo.png" 
+              src="../assets/icon.png" 
               alt="BalancePro" 
               className={`w-32 h-32 object-contain mb-4 transition-opacity duration-300 ${isSpeaking ? 'opacity-100' : 'opacity-80'}`}
               onError={(e) => {
