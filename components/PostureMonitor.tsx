@@ -69,16 +69,15 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     
     const systemPrompt = `
       You are Coach Nitesh, the expert AI trainer of BalancePro, founded by Nitesh Tyagi.
-      Knowledge: Expert in Strength Training, Diet (Protien, Carbs, Fats), Supplements, and Sustainable Lifestyle.
+      Knowledge: Expert in Strength Training, Diet (Protein, Carbs, Fats), Supplements, and Sustainable Lifestyle.
       Tone: Professional, highly motivating, and knowledgeable.
-      Language: Hindi/Hinglish.
+      Language: Hindi/Hinglish (Mix of Hindi and English).
       
       Instructions:
-      1. Give detailed advice on diet and fitness queries.
-      2. Keep responses between 10 to 20 words so they feel complete but fast.
-      3. CRITICAL: Never write digits like '3' or '4'. Always write them as 'teen', 'chaar', 'pandrah' in Hindi/Hinglish.
-      4. If asked about BalancePro, say it's Nitesh Tyagi's platform for professional fitness results.
-      5. Always encourage consistency.
+      1. Give detailed advice on diet and fitness.
+      2. Keep responses between 15 to 25 words so they feel expert and complete.
+      3. CRITICAL: Never write digits like '3' or '4'. Always write them as 'teen', 'chaar', 'bees' in Hindi/Hinglish words.
+      4. Always mention BalancePro's philosophy of consistency.
     `;
 
     try {
@@ -111,7 +110,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   const speakResponse = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'hi-IN';
-    utterance.rate = 0.95; // Slightly slower for better clarity
+    utterance.rate = 0.9; 
     utterance.pitch = 1.0;
 
     utterance.onstart = () => {
@@ -141,13 +140,12 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         {isSpeaking && <div className="absolute inset-0 rounded-full bg-blue-500 animate-pulse opacity-20 shadow-[0_0_80px_rgba(59,130,246,0.3)]"></div>}
         
         <div className="flex flex-col items-center">
-            {/* Logo Image */}
+            {/* FIXED PATH: public/assets/icon.png access via /assets/icon.png */}
             <img 
-              src="../assets/icon.png" 
+              src="/assets/icon.png" 
               alt="BalancePro" 
-              className={`w-32 h-32 object-contain mb-4 transition-opacity duration-300 ${isSpeaking ? 'opacity-100' : 'opacity-80'}`}
+              className={`w-32 h-32 object-contain mb-4 transition-all duration-500 ${isSpeaking ? 'scale-110' : 'scale-100 opacity-90'}`}
               onError={(e) => {
-                // Fallback if image path is wrong
                 (e.target as any).src = "https://via.placeholder.com/150?text=BP";
               }}
             />
@@ -156,7 +154,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
       </div>
 
       {/* Feedback Area */}
-      <div className="mt-12 text-center max-w-sm h-40 flex flex-col justify-center px-4">
+      <div className="mt-12 text-center max-w-sm h-48 flex flex-col justify-center px-4">
         <h2 className="text-zinc-600 font-black uppercase tracking-widest text-[10px] mb-3">Nitesh Tyagi's AI</h2>
         <p className={`text-xl font-bold italic leading-snug transition-all duration-300 ${isSpeaking ? 'text-white' : 'text-zinc-500'}`}>
           {isProcessing ? "Coach is calculating..." : feedback}
@@ -167,7 +165,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
       <div className="mt-8">
         <button
           onClick={toggleMic}
-          className={`w-24 h-24 rounded-full flex flex-col items-center justify-center transition-all shadow-2xl ${isMicOn ? 'bg-lime-600 border-4 border-lime-400' : 'bg-white text-black hover:scale-110'}`}
+          className={`w-24 h-24 rounded-full flex flex-col items-center justify-center transition-all shadow-2xl ${isMicOn ? 'bg-lime-600 border-4 border-lime-400' : 'bg-white text-black hover:scale-110 active:scale-95'}`}
         >
           <span className="font-black text-[10px] uppercase tracking-widest">{isMicOn ? 'Stop' : 'Start'}</span>
           <span className="font-bold text-[10px] italic">COACH</span>
