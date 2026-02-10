@@ -286,7 +286,7 @@ const handleGroqChat = async (userText: string) => {
           {isCallActive.current ? (
             <span className="text-white font-bold text-xs">END</span>
           ) : (
-            <span className="text-white font-bold text-xs">CALL</span>
+            <span className="text-white font-bold text-xs">CALL AI</span>
           )}
         </button>
       </div>
