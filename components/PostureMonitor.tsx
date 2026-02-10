@@ -184,7 +184,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
           {isMicOn && <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-20"></div>}
           <div className="flex flex-col items-center text-center p-4">
               <img 
-                src="/assets/logo1.jpeg" 
+                src="/assets/logo.jpeg" 
                 alt="Coach" 
                 className={`w-32 h-32 rounded-2xl object-cover shadow-2xl mb-4 transition-transform ${isSpeaking ? 'scale-110' : 'scale-100'}`} 
               />
