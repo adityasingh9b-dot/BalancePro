@@ -189,7 +189,7 @@ const handleGroqChat = async (userText: string) => {
           messages: [
             { 
               role: "system", 
-              content: `You are the Personal AI Assistant of Nitesh Tyagi, the best fitness trainer in Lucknow and founder of BalancePro (https://www.balancepro.in/), mobile number of trainer is 7355519301. 
+              content: `You are the Personal AI Assistant of Nitesh Tyagi, the best fitness trainer in Lucknow and founder of BalancePro (https://www.balancepro.in/). 
               Rules:
               1. Language: Strictly use Hinglish language only.
               2. Tone: Very respectful, professional, yet high energy.
