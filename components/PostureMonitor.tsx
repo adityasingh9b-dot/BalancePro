@@ -176,7 +176,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     }
   };
 
-  const handleGroqChat = async (userText: string) => {
+const handleGroqChat = async (userText: string) => {
     try {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -187,17 +187,36 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           messages: [
-            { role: "system", content: "You are Coach Nitesh. Reply in Hinglish. Keep it extremely short (max 10 words). Motivate for posture." },
+            { 
+              role: "system", 
+              content: `You are the Personal AI Assistant of Nitesh Tyagi, the best fitness trainer in Lucknow and founder of BalancePro (https://www.balancepro.in/). 
+              Rules:
+              1. Language: Strictly use Hinglish language only.
+              2. Tone: Very respectful, professional, yet high energy.
+              3. Context: Answer all fitness, posture, and health queries based on Nitesh Tyagi's expertise, as questioned by the clients.
+              4. Length: Keep responses short and crisp (10-15 words).
+              5. Ending: Always end with a follow-up like 'Aur kya help kar sakta hoon?' or 'Aapko kuch aur jaan-na hai?'.` 
+            },
             { role: "user", content: userText }
           ]
         })
       });
 
       const data = await res.json();
-      speakResponse(data.choices[0]?.message?.content);
+      
+      if (data.choices && data.choices[0]?.message?.content) {
+        const reply = data.choices[0].message.content;
+        speakResponse(reply);
+      } else {
+        // Agar API se response na aaye toh restart loop
+        setIsProcessing(false);
+        if (isCallActive.current) startRecordingTurn();
+      }
     } catch (err) {
+      addLog("Groq API Error");
       setIsProcessing(false);
-      startRecordingTurn();
+      // Fail hone par bhi call disconnect nahi hogi, dubara sunna shuru karega
+      if (isCallActive.current) startRecordingTurn();
     }
   };
 
