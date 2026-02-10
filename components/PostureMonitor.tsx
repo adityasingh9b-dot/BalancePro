@@ -15,6 +15,8 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   
+  // Naya Ref: Ye track karega ki "Continuous Mode" on hai ya nahi
+  const isSessionActive = useRef(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
 
@@ -23,18 +25,18 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   };
 
   useEffect(() => {
-    addLog("System Ready: Native TTS Active");
-    
-    // Request permissions on load
+    addLog("System Ready: Continuous Mode Enabled");
     VoiceRecorder.requestAudioRecordingPermission();
 
     return () => {
+      isSessionActive.current = false;
       stopNativeRecording();
       TextToSpeech.stop().catch(() => {}); 
     };
   }, []);
 
   const handleExit = () => {
+    isSessionActive.current = false;
     TextToSpeech.stop().catch(() => {});
     stopNativeRecording();
     onBack();
@@ -60,12 +62,18 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         stream.getTracks().forEach(t => t.stop());
       };
 
+      // Timer based stop: 4 seconds tak chup rahoge toh automatic process hoga
+      // Ya fir manually stop click karne par
       recorder.start();
       setIsMicOn(true);
       setFeedback("Sun raha hoon...");
-      addLog("Recording...");
+      addLog("Mic Live...");
+
+      // Optional: Auto-stop recording after 5 seconds of silence (advanced)
+      // Abhi ke liye manually ya complete turn par focus karte hain.
     } catch (err: any) {
       addLog(`Mic Error: ${err.message}`);
+      isSessionActive.current = false;
     }
   };
 
@@ -77,15 +85,22 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
   };
 
   const toggleMic = () => {
-    if (isMicOn) stopNativeRecording();
-    else {
-      TextToSpeech.stop().catch(() => {}); // Stop any current speech
+    if (isMicOn) {
+      isSessionActive.current = false; // Manually turned off
+      stopNativeRecording();
+      TextToSpeech.stop().catch(() => {});
+      setFeedback("Coach paused.");
+    } else {
+      isSessionActive.current = true; // Session started
       startNativeRecording();
     }
   };
 
   // --- AI PIPELINE ---
   const processAudioBlob = async (audioBlob: Blob, mimeType: string) => {
+    // Agar session manually band kar diya toh process mat karo
+    if (!isSessionActive.current && !isMicOn) return;
+
     setIsProcessing(true);
     setFeedback("Processing...");
     
@@ -106,12 +121,17 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         addLog(`You: ${data.text}`);
         handleGroqChat(data.text);
       } else {
-        setFeedback("Kucch sunai nahi diya.");
+        // Agar kuch nahi suna aur session active hai, toh dubara listen karo
         setIsProcessing(false);
+        if (isSessionActive.current) {
+          addLog("Silence detected, re-listening...");
+          startNativeRecording();
+        }
       }
     } catch (err) {
       addLog("Transcription Failed");
       setIsProcessing(false);
+      isSessionActive.current = false;
     }
   };
 
@@ -126,7 +146,7 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           messages: [
-            { role: "system", content: "You are Coach Nitesh. Reply in Hinglish. Keep it short and high energy. Max 15 words." },
+            { role: "system", content: "You are Coach Nitesh. Reply in Hinglish. Keep it very short (max 12 words). Motivate for fitness." },
             { role: "user", content: userText }
           ]
         })
@@ -141,13 +161,12 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
     }
   };
 
-  // --- NATIVE SPEECH (THE REAL FIX) ---
+  // --- NATIVE SPEECH + AUTO RESTART ---
   const speakResponse = async (text: string) => {
     try {
       setFeedback(text);
       setIsProcessing(false);
       setIsSpeaking(true);
-      addLog("Coach speaking...");
 
       await TextToSpeech.speak({
         text: text,
@@ -158,16 +177,25 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
         category: 'ambient',
       });
 
+      setIsSpeaking(false);
+      
+      // ✨ MAGIC PART: Bolne ke baad agar session active hai toh Mic wapas on karo
+      if (isSessionActive.current) {
+        addLog("Restarting Mic...");
+        setTimeout(() => {
+          if (isSessionActive.current) startNativeRecording();
+        }, 300); // Chota sa gap natural feel ke liye
+      }
+
     } catch (e) {
-      addLog("TTS Error occurred");
-    } finally {
+      addLog("TTS Error");
       setIsSpeaking(false);
     }
   };
 
   return (
     <div className="fixed inset-0 bg-zinc-950 text-white flex flex-col font-sans overflow-hidden">
-      {/* Mini Debug Logs */}
+      {/* Logs */}
       <div className="absolute top-0 left-0 w-full h-24 bg-black/80 text-green-400 text-[9px] p-2 overflow-y-auto z-50 font-mono border-b border-green-900 pointer-events-none">
         {logs.map((log, i) => <div key={i}>{log}</div>)}
       </div>
@@ -186,9 +214,11 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
               <img 
                 src="/assets/logo.jpeg" 
                 alt="Coach" 
-                className={`w-32 h-32 rounded-2xl object-cover shadow-2xl mb-4 transition-transform ${isSpeaking ? 'scale-110' : 'scale-100'}`} 
+                className={`w-32 h-32 rounded-2xl object-cover shadow-2xl mb-4 transition-all duration-300 ${isSpeaking ? 'scale-110 shadow-[0_0_25px_rgba(163,230,53,0.4)] border-2 border-lime-400' : 'scale-100 opacity-80'}`} 
               />
-              <span className="text-[10px] font-black tracking-[0.3em] text-lime-500 uppercase">Coach Nitesh</span>
+              <span className="text-[10px] font-black tracking-[0.3em] text-lime-500 uppercase">
+                {isMicOn ? 'Listening...' : 'Coach Nitesh'}
+              </span>
           </div>
         </div>
 
@@ -198,12 +228,20 @@ const PostureMonitor: React.FC<PostureMonitorProps> = ({ onBack }) => {
           </p>
         </div>
 
+        {/* Status Indicator */}
+        <div className="flex items-center gap-2 mb-[-20px]">
+           <div className={`w-2 h-2 rounded-full ${isSessionActive.current ? 'bg-green-500 animate-pulse' : 'bg-zinc-700'}`}></div>
+           <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
+             {isSessionActive.current ? 'Auto-Mode On' : 'Tap to Start'}
+           </span>
+        </div>
+
         <button
           onClick={toggleMic}
           className={`w-24 h-24 rounded-full flex flex-col items-center justify-center transition-all shadow-lg active:scale-95 ${isMicOn ? 'bg-red-600 shadow-red-900/50' : 'bg-white text-black'}`}
         >
           <div className={`w-3 h-3 mb-1 ${isMicOn ? 'bg-white' : 'bg-red-600'} rounded-sm ${isMicOn ? 'animate-pulse' : ''}`}></div>
-          <span className="font-bold text-[10px] uppercase">{isMicOn ? 'STOP' : 'TAP'}</span>
+          <span className="font-bold text-[10px] uppercase">{isMicOn ? 'STOP' : 'START'}</span>
         </button>
       </div>
     </div>
