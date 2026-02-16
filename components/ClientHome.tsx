@@ -180,16 +180,17 @@ return (
               {/* Midnight Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#081221] via-transparent to-transparent pointer-events-none"></div>
               
-              {/* Banner Content */}
-              <div className="absolute bottom-8 left-8 right-8 z-10 pointer-events-none">
-                 <span className="bg-[#FF0000] text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-lg mb-4 inline-block shadow-lg tracking-wider">
-                    Trending Now
-                 </span>
-                 <h2 className="text-3xl font-black italic uppercase text-white leading-tight tracking-tight drop-shadow-2xl">
-                    Nitesh Tyagi<br/>
-                    <span className="text-[#FFB800]">Fitness Trainer</span>
-                 </h2>
-              </div>
+             {/* Banner Content */}
+<div className="absolute bottom-8 left-8 right-8 z-10 pointer-events-none">
+  <span className="bg-[#FF0000] text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-lg mb-4 inline-block shadow-lg tracking-wider">
+    Trending Now
+  </span>
+  {/* text-white ko text-black kar diya hai neeche */}
+  <h2 className="text-3xl font-black italic uppercase text-black leading-tight tracking-tight drop-shadow-2xl">
+    Nitesh Tyagi<br/>
+    <span className="text-[#FFB800]">Fitness Trainer</span>
+  </h2>
+</div>
 
               {/* Glassy Slide Number */}
               <div className="absolute top-6 right-6 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[9px] font-bold text-white/60">
