@@ -17,10 +17,12 @@ const ClientHome: React.FC<ClientHomeProps> = ({ user, onJoinMeeting }) => {
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
   const [isAiMode, setIsAiMode] = useState(false);
   
+  const [isPaused, setIsPaused] = useState(false);
+const [touchStart, setTouchStart] = useState<number | null>(null); // Swipe track karne ke liye
+  
   // Banner Slider States
   const [bannerUrls, setBannerUrls] = useState<string[]>([]); 
   const [currentIndex, setCurrentIndex] = useState(0);
-  
   // In-App Player State
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -67,16 +69,43 @@ const ClientHome: React.FC<ClientHomeProps> = ({ user, onJoinMeeting }) => {
     };
   }, [user.uid]);
 
-  // EFFECT 2: Automatic Slider Logic (Must be outside the first useEffect)
-  useEffect(() => {
-    if (bannerUrls.length <= 1) return;
+useEffect(() => {
+  if (bannerUrls.length <= 1 || isPaused) return;
 
-    const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % bannerUrls.length);
-    }, 2500); 
+  const timer = setInterval(() => {
+    setCurrentIndex((prev) => (prev + 1) % bannerUrls.length);
+  }, 3500);
 
-    return () => clearInterval(timer);
-  }, [bannerUrls]);
+  return () => clearInterval(timer);
+}, [bannerUrls, isPaused]);
+
+const handleTouchStart = (e: React.TouchEvent) => {
+  setIsPaused(true);
+  // Hum clientX use kar rahe hain horizontal track karne ke liye
+  setTouchStart(e.targetTouches[0].clientX);
+};
+
+const handleTouchEnd = (e: React.TouchEvent) => {
+  setIsPaused(false);
+  
+  // Strict null check (Zero value allow karne ke liye)
+  if (touchStart === null) return;
+
+  const touchEnd = e.changedTouches[0].clientX;
+  const distance = touchStart - touchEnd;
+
+  // Sensitivity threshold: 50px
+  if (distance > 50) {
+    // Swipe Left -> Agli image
+    setCurrentIndex((prev) => (prev + 1) % bannerUrls.length);
+  } else if (distance < -50) {
+    // Swipe Right -> Pichli image
+    setCurrentIndex((prev) => (prev === 0 ? bannerUrls.length - 1 : prev - 1));
+  }
+  
+  // Reset state
+  setTouchStart(null);
+};
 
   const handlePlayVideo = (vidId: string) => {
     const video = videos.find(v => v.id === vidId);
@@ -88,6 +117,8 @@ const ClientHome: React.FC<ClientHomeProps> = ({ user, onJoinMeeting }) => {
       alert("Video link broken or not found.");
     }
   };
+  
+
 
   if (isAiMode) return <PostureMonitor onBack={() => setIsAiMode(false)} />;
 
@@ -105,7 +136,7 @@ return (
             <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em]">Today's Trending</h4>
           </div>
           
-          {/* Slide Indicators (Dots) - Sirf tab dikhenge jab 1 se zyada images hon */}
+          {/* Slide Indicators (Dots) */}
           {bannerUrls.length > 1 && (
             <div className="flex gap-1.5 px-2 py-1 bg-black/20 rounded-full border border-white/5">
               {bannerUrls.map((_, idx) => (
@@ -120,13 +151,20 @@ return (
           )}
         </div>
 
-        <div className="relative w-full rounded-[32px] overflow-hidden bg-[#0F1A2D] border border-white/5 shadow-2xl group">
+        {/* --- INTERACTIVE SLIDER CONTAINER --- */}
+        <div 
+  className="relative w-full rounded-[32px] overflow-hidden bg-[#0F1A2D] border border-white/5 shadow-2xl group touch-pan-y"
+  onMouseEnter={() => setIsPaused(true)}
+  onMouseLeave={() => setIsPaused(false)}
+  onTouchStart={handleTouchStart} 
+  onTouchEnd={handleTouchEnd}     
+>
           {bannerUrls.length > 0 ? (
             <div className="aspect-[4/3] sm:aspect-[16/9] w-full relative">
               
               {/* --- Sliding Images Container --- */}
               <div 
-                className="flex h-full transition-transform duration-700 ease-[custom-bezier(0.23, 1, 0.32, 1)]" 
+                className="flex h-full transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]" 
                 style={{ transform: `translateX(-${currentIndex * 100}%)` }}
               >
                 {bannerUrls.map((url, index) => (
@@ -134,17 +172,17 @@ return (
                     key={index} 
                     src={url} 
                     alt={`Trending ${index}`} 
-                    className="w-full h-full object-cover flex-shrink-0" 
+                    className="w-full h-full object-cover flex-shrink-0 select-none pointer-events-none" 
                   />
                 ))}
               </div>
 
               {/* Midnight Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#081221] via-[#081221]/20 to-transparent pointer-events-none"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#081221] via-transparent to-transparent pointer-events-none"></div>
               
-              {/* Banner Content (Nitesh Tyagi Text) */}
-              <div className="absolute bottom-8 left-8 right-8 z-10">
-                 <span className="bg-[#FF0000] text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-lg mb-4 inline-block shadow-lg tracking-wider animate-bounce">
+              {/* Banner Content */}
+              <div className="absolute bottom-8 left-8 right-8 z-10 pointer-events-none">
+                 <span className="bg-[#FF0000] text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-lg mb-4 inline-block shadow-lg tracking-wider">
                     Trending Now
                  </span>
                  <h2 className="text-3xl font-black italic uppercase text-white leading-tight tracking-tight drop-shadow-2xl">
@@ -153,7 +191,7 @@ return (
                  </h2>
               </div>
 
-              {/* Glassy Slide Number (Optional) */}
+              {/* Glassy Slide Number */}
               <div className="absolute top-6 right-6 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[9px] font-bold text-white/60">
                 {currentIndex + 1} / {bannerUrls.length}
               </div>
@@ -161,12 +199,12 @@ return (
           ) : (
             /* Empty State */
             <div className="aspect-[16/9] w-full bg-[#0F1A2D] flex flex-col items-center justify-center p-10 text-center">
-               <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4 text-slate-700 border border-white/5">
-                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                 </svg>
-               </div>
-               <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Awaiting Content Deployment...</p>
+                <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4 text-slate-700 border border-white/5">
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Awaiting Content Deployment...</p>
             </div>
           )}
         </div>

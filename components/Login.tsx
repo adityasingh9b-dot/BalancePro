@@ -13,27 +13,34 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsConnecting(true);
     
     try {
       const trainerPhone = '7355519301';
+      const trainerSecret = '#$!@'; // Hardcoded Admin Password
       const uid = `user_${phone}`;
       
+      // Admin/Trainer Check
       if (phone === trainerPhone) {
-        const trainerUser: UserProfile = {
-          uid,
-          name: 'Nitesh Tyagi',
-          phone,
-          role: UserRole.TRAINER,
-          registeredOn: Date.now(),
-        };
-        onLogin(trainerUser);
+        if (password === trainerSecret) {
+          const trainerUser: UserProfile = {
+            uid,
+            name: 'Nitesh Tyagi',
+            phone,
+            role: UserRole.TRAINER,
+            registeredOn: Date.now(),
+          };
+          onLogin(trainerUser);
+        } else {
+          setError('Incorrect Admin Passkey. Access Denied.');
+        }
         return;
       }
 
+      // Normal User Check from Firebase
       const userRef = ref(db, `users/${uid}`);
       const snapshot = await get(userRef);
 
