@@ -188,7 +188,7 @@ return (
   {/* text-white ko text-black kar diya hai neeche */}
   <h2 className="text-3xl font-black italic uppercase text-black leading-tight tracking-tight drop-shadow-2xl">
     Nitesh Tyagi<br/>
-    <span className="text-[#FFB800]">Fitness Trainer</span>
+    <span className="text-[#FFB800]">TESTIMONALS</span>
   </h2>
 </div>
 
