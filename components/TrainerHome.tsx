@@ -26,6 +26,7 @@ const TrainerHome: React.FC<TrainerHomeProps> = ({ user, onStartMeeting }) => {
   const [isLive, setIsLive] = useState(false);
   const [trendingBanner, setTrendingBanner] = useState<{ id: string, updatedOn: number } | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [bannerImages, setBannerImages] = useState<any[]>([]);
 
   // Vault/CRM/Other States
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
@@ -89,11 +90,25 @@ onValue(ref(db, 'schedules'), (snap) => {
   }
 });
 
-    // 6. Banner Sync
-    onValue(ref(db, 'trending_banner'), (snap) => {
-      const data = snap.val();
-      if (data?.url) setBannerPreview(data.url);
-    });
+  
+  onValue(ref(db, 'trending_banner'), (snap) => {
+  const data = snap.val();
+  if (data) {
+    // Agar object hai toh values nikaalo, warna khali array
+    const imagesList = Object.entries(data).map(([id, val]: [string, any]) => ({
+      id,
+      ...val
+    }));
+    setBannerImages(imagesList);
+    // Legacy support for your preview state (optional)
+    if (imagesList.length > 0) setBannerPreview(imagesList[0].url);
+  } else {
+    setBannerImages([]);
+    setBannerPreview(null);
+  }
+});
+  
+  
   }, []);
 
 const startLiveClass = async (invites: string[], existingId?: string) => {
@@ -264,8 +279,6 @@ const handleDeleteVideo = async (vidId: string, publicId?: string) => {
 };
 
 
-
-
 // --- VAULT HANDLERS ---
   const handleAddCategory = async () => {
     if (!newCatName.trim()) return;
@@ -277,20 +290,27 @@ const handleDeleteVideo = async (vidId: string, publicId?: string) => {
   };
 
 
-
-
-
-
-  // --- CRM / BRANDING HANDLERS ---
 const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
   if (!file) return;
 
   setIsSyncing(true);
   
+  // --- 1. LIMIT CHECK LOGIC ---
+  // Agar 10 pics pehle se hain, toh sabse purani (first in array) delete karo
+  if (bannerImages.length >= 10) {
+    const oldestPhoto = bannerImages[0]; // Pehli photo (sorted by timestamp typically)
+    try {
+      await remove(ref(db, `trending_banner/${oldestPhoto.id}`));
+      console.log("Auto-removed oldest photo to maintain 10-pic limit");
+    } catch (err) {
+      console.error("Failed to auto-remove oldest photo", err);
+    }
+  }
+
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('upload_preset', UPLOAD_PRESET); // "balancepro" use karein
+  formData.append('upload_preset', UPLOAD_PRESET);
   formData.append('resource_type', 'image');
 
   try {
@@ -301,21 +321,35 @@ const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const data = await res.json();
 
     if (data.secure_url) {
-      // Seedha URL database mein save karein
-      await set(ref(db, 'trending_banner'), { 
-        url: data.secure_url, // 'id' ki jagah seedha 'url' save karein
+      const imgId = Date.now().toString(); 
+      await set(ref(db, `trending_banner/${imgId}`), { 
+        url: data.secure_url,
+        publicId: data.public_id,
         updatedOn: Date.now(),
         status: 'active'
       });
-      setBannerPreview(data.secure_url);
-      alert("Studio Banner Updated!");
+      alert(bannerImages.length >= 10 
+        ? "Banner updated! (Oldest photo removed to keep it 10 max)" 
+        : "Nayi photo add ho gayi!");
     }
   } catch (err) {
-    alert("Failed to update banner.");
+    alert("Upload fail ho gaya!");
   } finally {
     setIsSyncing(false);
   }
-e.target.value = '';
+  e.target.value = '';
+};
+
+// Image delete logic
+const handleDeleteBanner = async (imgId: string) => {
+  if (confirm("Bhai, ye photo trending se hata du?")) {
+    try {
+      await remove(ref(db, `trending_banner/${imgId}`));
+      alert("Photo removed!");
+    } catch (e) {
+      alert("Delete failed.");
+    }
+  }
 };
 
   const handleRegisterMember = async (e: React.FormEvent) => {
@@ -387,6 +421,7 @@ const handleScheduleSubmit = async (e: React.FormEvent) => {
     alert("Failed to save schedule.");
   }
 };
+
 
 return (
     <div className="min-h-screen bg-[#081221] p-6 text-slate-200 selection:bg-[#FFB800] selection:text-black">
@@ -747,26 +782,49 @@ return (
         </form>
       </div>
 
-      {/* STUDIO BRANDING SECTION */}
+{/* STUDIO BRANDING SECTION */}
       <div className="bg-[#0F1A2D] border border-white/5 rounded-[32px] p-8 shadow-xl">
-        <h3 className="text-slate-500 font-black text-[10px] uppercase mb-4 tracking-[0.2em]">Live Banner Preview</h3>
+        <h3 className="text-slate-500 font-black text-[10px] uppercase mb-4 tracking-[0.2em]">
+          Trending Slider ({bannerImages.length}/10)
+        </h3>
         <div className="space-y-4">
-          <div className="relative aspect-video bg-black/40 rounded-2xl overflow-hidden border border-white/5 flex items-center justify-center shadow-inner">
-            {bannerPreview ? (
-              <img src={bannerPreview} alt="Trending" className="w-full h-full object-cover" />
-            ) : (
-              <div className="text-[10px] text-slate-700 font-black uppercase tracking-widest">No Banner Uploaded</div>
+          <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto custom-scrollbar p-1">
+            {bannerImages.map((banner) => (
+              <div key={banner.id} className="relative aspect-video bg-black/40 rounded-xl overflow-hidden border border-white/5 group">
+                <img src={banner.url} alt="Trending" className="w-full h-full object-cover" />
+                <button 
+                  onClick={() => remove(ref(db, `trending_banners/${banner.id}`))}
+                  className="absolute top-1 right-1 bg-black/60 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 hover:text-[#e31e24] transition-all backdrop-blur-md"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+            {bannerImages.length === 0 && (
+              <div className="col-span-2 text-center py-8 text-[10px] text-slate-700 font-black uppercase tracking-widest border border-dashed border-white/10 rounded-xl">
+                No Banners Active
+              </div>
             )}
           </div>
-          <label className="block w-full bg-[#16243d] hover:bg-white/5 text-slate-400 py-4 rounded-xl text-center cursor-pointer border border-white/10 transition-all group">
-            <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-[#FFB800]">
-              {isSyncing ? 'Syncing...' : 'Upload Daily Image (JPG)'}
+
+          <label className={`block w-full bg-[#16243d] py-4 rounded-xl text-center cursor-pointer border transition-all group
+            ${bannerImages.length >= 10 ? 'opacity-50 pointer-events-none border-white/5' : 'hover:bg-white/5 border-white/10'}`}>
+            <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-[#FFB800] text-slate-400">
+              {isSyncing ? 'Syncing...' : '+ Add Trending Image'}
             </span>
-            <input type="file" accept="image/jpeg,image/jpg" className="hidden" onChange={handleBannerUpload} disabled={isSyncing} />
+            <input 
+              type="file" 
+              accept="image/jpeg,image/jpg" 
+              className="hidden" 
+              onChange={handleBannerUpload} 
+              disabled={isSyncing || bannerImages.length >= 10} 
+            />
           </label>
         </div>
       </div>
-    </div>
+    </div> {/* THIS DIV CLOSES THE LEFT COLUMN - DO NOT REMOVE */}
 
     {/* MEMBER DIRECTORY */}
     <div className="bg-[#0F1A2D] border border-white/5 rounded-[32px] p-8 h-full min-h-[600px] overflow-y-auto shadow-xl custom-scrollbar">

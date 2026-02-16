@@ -71,7 +71,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               className="w-auto h-20 md:h-24 object-contain rounded-2xl shadow-lg" 
             />
           </div>
-          <p className="text-slate-400 text-[9px] font-bold uppercase tracking-[0.4em] opacity-80"> Contact Nitesh for Registration </p>
+          <p className="text-slate-400 text-[9px] font-bold uppercase tracking-[0.4em] opacity-80"> Welcome to BalancePro Studio </p>
         </div>
 
         {error && (
@@ -115,8 +115,36 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </button>
         </form>
 
-        <div className="mt-8 text-center text-slate-500 text-[9px] font-bold uppercase tracking-[0.4em]">
-          WhatsApp & bull; 7355519301
+        {/* --- Adjacent Links Section --- */}
+        <div className="mt-8 flex flex-row gap-3">
+          <a 
+            href="https://balancepro.in" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[9px] font-bold py-3 rounded-xl text-center uppercase tracking-widest transition-all"
+          >
+            Visit Website
+          </a>
+          <a 
+            href="https://youtu.be/CKbGSd2ML4o?feature=shared" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex-1 bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 text-red-500 text-[9px] font-bold py-3 rounded-xl text-center uppercase tracking-widest transition-all"
+          >
+            App Tutorial
+          </a>
+        </div>
+
+        {/* --- WhatsApp Contact Button --- */}
+        <div className="mt-8 text-center">
+          <a 
+            href="https://wa.me/917355519301" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-block px-6 py-2 bg-green-500/10 border border-green-500/20 rounded-full text-green-400 text-[9px] font-bold uppercase tracking-[0.2em] hover:bg-green-500/20 transition-all active:scale-95"
+          >
+            Click Here to Contact Nitesh Tyagi
+          </a>
         </div>
       </div>
     </div>

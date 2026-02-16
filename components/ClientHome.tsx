@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, ActiveClass, DietPlan, VideoCategory, VideoItem } from '../types';
-import { db, storage } from '../services/firebaseService'; // Real service use karein
+import { db } from '../services/firebaseService'; 
 import { ref, onValue } from 'firebase/database';
-import { ref as sRef, getDownloadURL } from 'firebase/storage';
 import PostureMonitor from './PostureMonitor';
 
 interface ClientHomeProps {
@@ -17,14 +16,17 @@ const ClientHome: React.FC<ClientHomeProps> = ({ user, onJoinMeeting }) => {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
   const [isAiMode, setIsAiMode] = useState(false);
-  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  
+  // Banner Slider States
+  const [bannerUrls, setBannerUrls] = useState<string[]>([]); 
+  const [currentIndex, setCurrentIndex] = useState(0);
   
   // In-App Player State
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
-useEffect(() => {
-    // Real-time listeners with cleanup
+  // EFFECT 1: Real-time Firebase Listeners
+  useEffect(() => {
     const unsubClass = onValue(ref(db, 'active_class'), (snap) => {
       const data = snap.val();
       setActiveClass(data?.status === 'live' && data.invitedUids?.includes(user.uid) ? data : null);
@@ -44,95 +46,133 @@ useEffect(() => {
       setDietPlan(snap.val());
     });
 
-    // ClientHome.tsx ke useEffect ke andar
-const unsubBanner = onValue(ref(db, 'trending_banner'), (snap) => {
+    const unsubBanner = onValue(ref(db, 'trending_banner'), (snap) => { // <--- 's' HATA DIYA
   const data = snap.val();
-  // Agar URL hai toh seedha set karein, koi fetch karne ki zaroorat nahi
-  if (data?.url) {
-    setBannerUrl(data.url);
+  if (data) {
+    // Objects ko array mein convert kar rahe hain slider ke liye
+    const urls = Object.values(data).map((item: any) => item.url);
+    setBannerUrls(urls);
   } else {
-    setBannerUrl(null);
+    setBannerUrls([]);
   }
 });
 
-    return () => { unsubClass(); unsubCats(); unsubVids(); unsubDiet(); unsubBanner(); };
+    // Cleanup all listeners on unmount
+    return () => { 
+      unsubClass(); 
+      unsubCats(); 
+      unsubVids(); 
+      unsubDiet(); 
+      unsubBanner(); 
+    };
   }, [user.uid]);
 
+  // EFFECT 2: Automatic Slider Logic (Must be outside the first useEffect)
+  useEffect(() => {
+    if (bannerUrls.length <= 1) return;
 
-const handlePlayVideo = (vidId: string) => {
-  // 1. Videos array mein se sahi video object dhundo
-  const video = videos.find(v => v.id === vidId);
-  
-  if (video && video.url) {
-    setPlayingVideoId(vidId);
-    // 2. Direct Cloudinary URL set karein jo database mein save hai
-    setVideoUrl(video.url);
-  } else {
-    console.error("Video record or URL missing in DB");
-    alert("Video link broken or not found.");
-  }
-};
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % bannerUrls.length);
+    }, 2500); 
 
-// Purana useEffect (Line 54-69) delete kar dein, uski zaroorat nahi hai.
+    return () => clearInterval(timer);
+  }, [bannerUrls]);
+
+  const handlePlayVideo = (vidId: string) => {
+    const video = videos.find(v => v.id === vidId);
+    if (video && video.url) {
+      setPlayingVideoId(vidId);
+      setVideoUrl(video.url);
+    } else {
+      console.error("Video record or URL missing in DB");
+      alert("Video link broken or not found.");
+    }
+  };
 
   if (isAiMode) return <PostureMonitor onBack={() => setIsAiMode(false)} />;
 
   const filteredVideos = videos.filter(v => v.categoryId === selectedCatId);
 
 return (
-  /* Trainer UI Style: Fixed White space by using min-h-screen & consistent navy bg */
   <div className="min-h-screen bg-[#081221] text-slate-200 selection:bg-[#FFB800] selection:text-black">
     <div className="p-6 max-w-2xl mx-auto space-y-16 pb-32 animate-in fade-in duration-700">
 
-      {/* Today's Trending Banner - Midnight Edition */}
+      {/* Today's Trending Banner - Midnight Edition (Slider) */}
       <section className="space-y-4">
-        <div className="flex items-center gap-2 mb-2 ml-1">
-          {/* Gold Pulse Dot */}
-          <span className="w-1.5 h-1.5 bg-[#FFB800] rounded-full animate-pulse shadow-[0_0_8px_#FFB800]"></span>
-          <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em]">Today's Trending</h4>
+        <div className="flex justify-between items-end mb-2 ml-1">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-[#FFB800] rounded-full animate-pulse shadow-[0_0_8px_#FFB800]"></span>
+            <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em]">Today's Trending</h4>
+          </div>
+          
+          {/* Slide Indicators (Dots) - Sirf tab dikhenge jab 1 se zyada images hon */}
+          {bannerUrls.length > 1 && (
+            <div className="flex gap-1.5 px-2 py-1 bg-black/20 rounded-full border border-white/5">
+              {bannerUrls.map((_, idx) => (
+                <div 
+                  key={idx} 
+                  className={`h-1 rounded-full transition-all duration-500 ${
+                    idx === currentIndex ? 'w-4 bg-[#FFB800]' : 'w-1 bg-white/20'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Card Style matching Trainer's grid items */}
-        <div className="relative w-full rounded-[32px] overflow-hidden bg-[#0F1A2D] border border-white/5 shadow-2xl group transition-all">
-          {bannerUrl ? (
+        <div className="relative w-full rounded-[32px] overflow-hidden bg-[#0F1A2D] border border-white/5 shadow-2xl group">
+          {bannerUrls.length > 0 ? (
             <div className="aspect-[4/3] sm:aspect-[16/9] w-full relative">
-              <img 
-                src={bannerUrl} 
-                alt="Daily Trending" 
-                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-              />
               
-              {/* Midnight Gradient Overlay for deeper look */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#081221] via-[#081221]/40 to-transparent pointer-events-none"></div>
+              {/* --- Sliding Images Container --- */}
+              <div 
+                className="flex h-full transition-transform duration-700 ease-[custom-bezier(0.23, 1, 0.32, 1)]" 
+                style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+              >
+                {bannerUrls.map((url, index) => (
+                  <img 
+                    key={index} 
+                    src={url} 
+                    alt={`Trending ${index}`} 
+                    className="w-full h-full object-cover flex-shrink-0" 
+                  />
+                ))}
+              </div>
+
+              {/* Midnight Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#081221] via-[#081221]/20 to-transparent pointer-events-none"></div>
               
-              <div className="absolute bottom-8 left-8 right-8">
-                 {/* Red Trending Tag */}
-                 <span className="bg-[#FF0000] text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-lg mb-4 inline-block shadow-lg tracking-wider">
-                    Trending
+              {/* Banner Content (Nitesh Tyagi Text) */}
+              <div className="absolute bottom-8 left-8 right-8 z-10">
+                 <span className="bg-[#FF0000] text-white text-[9px] font-black uppercase px-3 py-1.5 rounded-lg mb-4 inline-block shadow-lg tracking-wider animate-bounce">
+                    Trending Now
                  </span>
-                 <h2 className="text-3xl font-black italic uppercase text-white leading-tight tracking-tight">
+                 <h2 className="text-3xl font-black italic uppercase text-white leading-tight tracking-tight drop-shadow-2xl">
                     Nitesh Tyagi<br/>
                     <span className="text-[#FFB800]">Fitness Trainer</span>
                  </h2>
               </div>
+
+              {/* Glassy Slide Number (Optional) */}
+              <div className="absolute top-6 right-6 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[9px] font-bold text-white/60">
+                {currentIndex + 1} / {bannerUrls.length}
+              </div>
             </div>
           ) : (
-            /* Empty State: Trainer UI Midnight Vibe */
+            /* Empty State */
             <div className="aspect-[16/9] w-full bg-[#0F1A2D] flex flex-col items-center justify-center p-10 text-center">
                <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-4 text-slate-700 border border-white/5">
                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                  </svg>
                </div>
-               <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Deploying Daily Update...</p>
+               <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Awaiting Content Deployment...</p>
             </div>
           )}
         </div>
       </section>
-      
-      
 
-{/* Part 2: Live Class Alert - BalancePro Midnight Edition */}
+      {/* Part 2: Live Class Alert will follow here... */}
       {activeClass && (
         <div className="relative group overflow-hidden bg-[#0F1A2D] border border-[#FF0000]/30 p-8 rounded-[32px] shadow-2xl animate-in slide-in-from-top duration-500">
           {/* Subtle Red Glow Background */}
@@ -367,76 +407,6 @@ return (
   <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] pointer-events-none"></div>
 </div>
       
-      
-{/* Part 6: In-App Video Player Overlay - Cinema Studio Edition */}
-{playingVideoId && (
-  <div className="fixed inset-0 z-[100] bg-[#081221]/98 backdrop-blur-2xl flex flex-col items-center justify-center p-4 sm:p-8 animate-in fade-in zoom-in-95 duration-300">
-    
-    {/* Floating Close Button - Top Right */}
-    <button 
-      onClick={() => setPlayingVideoId(null)} 
-      className="absolute top-6 right-6 w-12 h-12 bg-white/5 border border-white/10 text-white rounded-2xl flex items-center justify-center hover:bg-[#FF0000] hover:border-[#FF0000] transition-all duration-300 z-[110] group"
-    >
-      <svg className="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
-
-    <div className="w-full max-w-5xl space-y-6">
-      {/* Video Header Branding */}
-      <div className="flex flex-col items-center text-center space-y-2 mb-4">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 bg-[#FFB800] rounded-full animate-pulse"></span>
-          <p className="text-[#FFB800] text-[10px] font-black uppercase tracking-[0.4em]">BalancePro Masterclass</p>
-        </div>
-        <h2 className="text-2xl sm:text-3xl font-black italic uppercase text-white tracking-tighter leading-none">
-          {videos.find(v => v.id === playingVideoId)?.title}
-        </h2>
-      </div>
-
-      {/* Main Video Container with Trainer-style Shadow */}
-      <div className="relative aspect-video bg-black rounded-[40px] overflow-hidden border border-white/10 shadow-[0_0_100px_rgba(0,0,0,1)] ring-1 ring-white/5">
-        {videoUrl ? (
-          <video 
-            src={videoUrl} 
-            controls 
-            autoPlay 
-            loop 
-            playsInline 
-            webkit-playsinline="true" 
-            className="w-full h-full object-contain shadow-2xl" 
-          />
-        ) : (
-          /* High-Tech Loading State */
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-[#0F1A2D]">
-            <div className="relative">
-              <div className="w-16 h-16 border-2 border-[#FFB800]/20 border-t-[#FFB800] rounded-full animate-spin"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-2 h-2 bg-[#FFB800] rounded-full animate-ping"></div>
-              </div>
-            </div>
-            <div className="text-center">
-              <p className="text-[10px] text-white font-black uppercase tracking-[0.3em] mb-1">Secure Connection</p>
-              <p className="text-slate-500 text-[8px] font-bold uppercase tracking-widest">Decrypting Drill Data...</p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Bottom Branding / Disclaimer */}
-      <div className="flex justify-center">
-        <div className="px-6 py-2 rounded-full bg-white/5 border border-white/5 backdrop-blur-sm">
-          <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.2em]">
-            Property of <span className="text-white">Nitesh Tyagi Fitness</span> • All Rights Reserved
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-
-
 
 {/* Final Part: In-App Video Player Overlay - Cinema Pro Polish */}
       {playingVideoId && (
