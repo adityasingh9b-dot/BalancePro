@@ -340,14 +340,14 @@ const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   e.target.value = '';
 };
 
-// Image delete logic
 const handleDeleteBanner = async (imgId: string) => {
-  if (confirm("Bhai, ye photo trending se hata du?")) {
+  if (window.confirm("Bhai, ye photo trending se hata du?")) {
     try {
+      // FIX: Path singular hona chahiye consistent rehne ke liye
       await remove(ref(db, `trending_banner/${imgId}`));
-      alert("Photo removed!");
+      alert("Photo removed from database!");
     } catch (e) {
-      alert("Delete failed.");
+      alert("Delete failed. Check internet!");
     }
   }
 };
@@ -783,47 +783,50 @@ return (
       </div>
 
 {/* STUDIO BRANDING SECTION */}
-      <div className="bg-[#0F1A2D] border border-white/5 rounded-[32px] p-8 shadow-xl">
-        <h3 className="text-slate-500 font-black text-[10px] uppercase mb-4 tracking-[0.2em]">
-          Trending Slider ({bannerImages.length}/10)
-        </h3>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto custom-scrollbar p-1">
-            {bannerImages.map((banner) => (
-              <div key={banner.id} className="relative aspect-video bg-black/40 rounded-xl overflow-hidden border border-white/5 group">
-                <img src={banner.url} alt="Trending" className="w-full h-full object-cover" />
-                <button 
-                  onClick={() => remove(ref(db, `trending_banners/${banner.id}`))}
-                  className="absolute top-1 right-1 bg-black/60 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 hover:text-[#e31e24] transition-all backdrop-blur-md"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-            {bannerImages.length === 0 && (
-              <div className="col-span-2 text-center py-8 text-[10px] text-slate-700 font-black uppercase tracking-widest border border-dashed border-white/10 rounded-xl">
-                No Banners Active
-              </div>
-            )}
-          </div>
-
-          <label className={`block w-full bg-[#16243d] py-4 rounded-xl text-center cursor-pointer border transition-all group
-            ${bannerImages.length >= 10 ? 'opacity-50 pointer-events-none border-white/5' : 'hover:bg-white/5 border-white/10'}`}>
-            <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-[#FFB800] text-slate-400">
-              {isSyncing ? 'Syncing...' : '+ Add Trending Image'}
-            </span>
-            <input 
-              type="file" 
-              accept="image/jpeg,image/jpg" 
-              className="hidden" 
-              onChange={handleBannerUpload} 
-              disabled={isSyncing || bannerImages.length >= 10} 
-            />
-          </label>
+<div className="bg-[#0F1A2D] border border-white/5 rounded-[32px] p-8 shadow-xl">
+  <h3 className="text-slate-500 font-black text-[10px] uppercase mb-4 tracking-[0.2em]">
+    Trending Slider ({bannerImages.length}/10)
+  </h3>
+  <div className="space-y-4">
+    <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto custom-scrollbar p-1">
+      {bannerImages.map((banner) => (
+        <div key={banner.id} className="relative aspect-video bg-black/40 rounded-xl overflow-hidden border border-white/5 group">
+          <img src={banner.url} alt="Trending" className="w-full h-full object-cover" />
+          
+          {/* DELETE BUTTON FIXED */}
+          <button 
+            onClick={() => handleDeleteBanner(banner.id)}
+            className="absolute top-1 right-1 bg-black/60 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 hover:text-[#e31e24] transition-all backdrop-blur-md z-20"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-      </div>
+      ))}
+      
+      {bannerImages.length === 0 && (
+        <div className="col-span-2 text-center py-8 text-[10px] text-slate-700 font-black uppercase tracking-widest border border-dashed border-white/10 rounded-xl">
+          No Banners Active
+        </div>
+      )}
+    </div>
+
+    <label className={`block w-full bg-[#16243d] py-4 rounded-xl text-center cursor-pointer border transition-all group
+      ${bannerImages.length >= 10 ? 'opacity-50 pointer-events-none border-white/5' : 'hover:bg-white/5 border-white/10'}`}>
+      <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-[#FFB800] text-slate-400">
+        {isSyncing ? 'Syncing...' : '+ Add Trending Image'}
+      </span>
+      <input 
+        type="file" 
+        accept="image/jpeg,image/jpg" 
+        className="hidden" 
+        onChange={handleBannerUpload} 
+        disabled={isSyncing || bannerImages.length >= 10} 
+      />
+    </label>
+  </div>
+</div>
     </div> {/* THIS DIV CLOSES THE LEFT COLUMN - DO NOT REMOVE */}
 
     {/* MEMBER DIRECTORY */}
