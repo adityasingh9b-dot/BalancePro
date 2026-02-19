@@ -228,7 +228,7 @@ return (
             </div>
             
             <h2 className="text-2xl font-black italic uppercase text-white tracking-tight mb-6 text-center">
-              Coach Nitesh <span className="text-[#FFB800]">is On Air</span>
+              Coach Nitesh <span className="text-[#FFB800]">is live!</span>
             </h2>
             
             {/* Trainer Style Action Button */}
@@ -240,7 +240,7 @@ return (
             </button>
             
             <p className="mt-4 text-[9px] font-bold text-slate-500 uppercase tracking-widest opacity-60">
-              High-Definition Stream • Real-time Feedback
+              High-Quality Stream • Real-Time Class
             </p>
           </div>
 
