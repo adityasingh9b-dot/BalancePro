@@ -57,25 +57,38 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
 
     const domain = 'meet.ffmuc.net';
     
-    const options = {
+const options = {
       roomName: `BalanceProStudio_${meetingId}`, 
       width: '100%',
       height: '100%',
       parentNode: containerRef.current,
       configOverwrite: {
+        // --- 🟢 CROP FIX SETTINGS (MOST IMPORTANT) ---
+        disableVideoFill: true,             // Video ko zoom/crop karke screen bharne se rokta hai
+        disableSelfViewSettings: false, 
+        doNotFlipLocalVideo: false,        // Mirrored view for better posture correction
+        
+        // --- VIDEO QUALITY & RESOLUTION ---
+        resolution: 720,                   // HD resolution for clear posture checking
+        constraints: {
+            video: {
+                aspectRatio: 16 / 9,       // Standard widescreen ratio
+            },
+        },
+
         prejoinPageEnabled: false,
         startWithAudioMuted: false,
         startWithVideoMuted: false,
+        
         // --- AUDIO FORCE SETTINGS ---
         disableAudioLevels: false,
         audioEnumerationInterval: 500,
         enableNoAudioDetection: true,
         enableNoisyMicDetection: true,
-        // Sound quality ko boost karne ke liye ye zaruri hain
-        disableAP: false, // Audio Processing on rakho
-        disableAEC: false, // Echo Cancellation
-        disableNS: false,  // Noise Suppression
-        disableAGC: false, // Auto Gain Control (awaz apne aap badhti hai)
+        disableAP: false, 
+        disableAEC: false, 
+        disableNS: false,  
+        disableAGC: false, 
         
         apiAllowClickToJoin: true,
         p2p: { enabled: true },
@@ -83,7 +96,10 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
         lobby: { enabled: false },
       },
       interfaceConfigOverwrite: {
+        // --- 🟢 UI LAYOUT FIX ---
+        VIDEO_LAYOUT_FIT: 'both',          // Video ko container ke andar fit karega (Letterboxing)
         MOBILE_APP_PROMO: false,
+        TILE_VIEW_MAX_COLUMNS: 2,          // Trainer aur Client barabar dikhein
         TOOLBAR_BUTTONS: [
           'microphone', 'camera', 'fodeviceselection', 'hangup', 'chat', 'settings', 'tileview'
         ],
@@ -145,7 +161,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-lime-500 shadow-[0_0_8px_#84cc16]"></div>
           <span className="text-[10px] font-bold uppercase tracking-tighter text-zinc-400">
-            {isTrainer ? 'Studio Master' : 'Client View'} • Audio Active
+            {isTrainer ? 'Welcome Nitesh' : 'Welcome to'} • BalancePro Studio
           </span>
         </div>
         <div className="flex gap-2">
