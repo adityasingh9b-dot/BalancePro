@@ -50,39 +50,45 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
   useEffect(() => {
     if (!containerRef.current || !window.JitsiMeetExternalAPI) return;
 
-    // Cleanup old instance
     if (jitsiApiRef.current) {
       jitsiApiRef.current.dispose();
     }
 
-    // 🟢 FIXED: Server ko pure public meet.jit.si par rakha hai bina kisi authorization restriction ke
-    const domain = 'meet.jit.si';
+    // 🟢 BACK TO COMPLETELY UNRESTRICTED SERVER: Is domain par koi host/login policy nahi hai
+    const domain = 'meet.ffmuc.net';
     
     const options = {
-      // 🟢 FIXED: Premium cookie token prefix poori tarah remove kar diya taaki link open access rhe
-      roomName: `BalanceProStudio_${meetingId}`, 
+      // 🟢 CLEAN ROOM NAME: Bilkul simple open access room name
+      roomName: `BalanceProStudioRoom_${meetingId}`, 
       width: '100%',
       height: '100%',
       parentNode: containerRef.current,
       configOverwrite: {
-        // --- 🟢 CROP FIX SETTINGS (MOST IMPORTANT) ---
-        disableVideoFill: true,             // Video ko zoom/crop karke screen bharne se rokta hai
-        disableSelfViewSettings: false, 
-        doNotFlipLocalVideo: false,        // Mirrored view for better posture correction
+        // --- 🟢 NO HOST / NO SAFETY / BYPASS EVERY SECURITY ---
+        lobby: { enabled: false },
+        enableLobby: false,
+        autoKnock: false,
+        prejoinPageEnabled: false,             // Kisi ko bhi wait na karna pade, seedhe screen aaye
+        requireDisplayName: false,
+        roles: {
+          moderator: false                    // 'No Professor/No Host' mode activate karne ke liye
+        },
+        securityUi: {
+          disableSelectablePassword: true,
+        },
         
-        // --- VIDEO QUALITY & RESOLUTION ---
-        resolution: 720,                   // HD resolution for clear posture checking
+        // --- CROP & RESOLUTION FIXES ---
+        disableVideoFill: true,             
+        disableSelfViewSettings: false, 
+        doNotFlipLocalVideo: false,        
+        resolution: 720,                   
         constraints: {
             video: {
-                aspectRatio: 16 / 9,       // Standard widescreen ratio
+                aspectRatio: 16 / 9,       
             },
         },
-
-        prejoinPageEnabled: false,
-        startWithAudioMuted: false,
-        startWithVideoMuted: false,
         
-        // --- AUDIO FORCE SETTINGS ---
+        // --- AUDIO COMPATIBILITY ---
         disableAudioLevels: false,
         audioEnumerationInterval: 500,
         enableNoAudioDetection: true,
@@ -95,13 +101,11 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
         apiAllowClickToJoin: true,
         p2p: { enabled: true },
         disableDeepLinking: true,
-        lobby: { enabled: false }, // 🟢 Ensure lobby/waiting room is disabled
       },
       interfaceConfigOverwrite: {
-        // --- 🟢 UI LAYOUT FIX ---
-        VIDEO_LAYOUT_FIT: 'both',          // Video ko container ke andar fit karega (Letterboxing)
+        VIDEO_LAYOUT_FIT: 'both',          
         MOBILE_APP_PROMO: false,
-        TILE_VIEW_MAX_COLUMNS: 2,          // Trainer aur Client barabar dikhein
+        TILE_VIEW_MAX_COLUMNS: 2,          
         TOOLBAR_BUTTONS: [
           'microphone', 'camera', 'fodeviceselection', 'hangup', 'chat', 'settings', 'tileview'
         ],
@@ -114,7 +118,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
     try {
       jitsiApiRef.current = new window.JitsiMeetExternalAPI(domain, options);
       
-      // Iframe permissions: 'speaker-selection' aur 'autoplay' are critical!
       const iframe = containerRef.current.querySelector('iframe');
       if (iframe) {
         iframe.setAttribute('allow', 'camera; microphone; display-capture; autoplay; clipboard-write; speaker-selection');
@@ -123,11 +126,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
       jitsiApiRef.current.addEventListeners({
         videoConferenceLeft: onLeave,
         readyToClose: onLeave
-      });
-
-      // Extra check: Agar device change ho toh refresh ho jaye logic
-      jitsiApiRef.current.on('audioDeviceChanged', () => {
-        console.log('Audio device changed, syncing...');
       });
 
     } catch (e) {
@@ -158,7 +156,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
 
   return (
     <div className="fixed inset-0 bg-zinc-950 flex flex-col z-50">
-      {/* Dynamic Status Bar */}
       <div className="h-14 bg-zinc-900 flex items-center justify-between px-4 border-b border-zinc-800">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-lime-500 shadow-[0_0_8px_#84cc16]"></div>
@@ -180,7 +177,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
 
       <div className="flex-1 bg-black" ref={containerRef} />
 
-      {/* Quick Invite List */}
       {showInviteModal && (
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-zinc-900 w-full max-w-xs rounded-3xl p-6 border border-zinc-800">
