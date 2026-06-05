@@ -12,13 +12,13 @@ interface VideoCallProps {
 
 declare global {
   interface Window {
-    JitsiMeetExternalAPI: any;
+    MiroTalkAPI: any;
   }
 }
 
 const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isTrainer }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const jitsiApiRef = useRef<any>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [clients, setClients] = useState<UserProfile[]>([]);
   const [invitedUids, setInvitedUids] = useState<string[]>([]);
@@ -48,79 +48,43 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
   }, [isTrainer]);
 
   useEffect(() => {
-    if (!containerRef.current || !window.JitsiMeetExternalAPI) return;
+    if (!containerRef.current) return;
 
-    if (jitsiApiRef.current) {
-      jitsiApiRef.current.dispose();
-    }
+    // Remove old iframe if any
+    containerRef.current.innerHTML = '';
 
-    // 🟢 OFFICIAL STABLE EMBEDDING DOMAIN
-    const domain = '8x8.vc';
+    // 🟢 MIROTALK PUBLIC ENDPOINT: 100% Free For All (No Login / No Moderator required)
+    const roomName = `BalanceProStudio_${meetingId}`;
+    const mirotalkUrl = `https://p2p.mirotalk.com/join/?room=${roomName}&name=${encodeURIComponent(
+      userName + (isTrainer ? ' (Coach)' : '')
+    )}&audio=1&video=1&screen=0&chat=1&notify=1`;
+
+    // Create custom iframe for robust styling control
+    const iframe = document.createElement('iframe');
+    iframe.src = mirotalkUrl;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
     
-    const options = {
-      // 🟢 NO COOKIE PREFIX: Pure free route taaki auth popup na aaye
-      roomName: `vpaas-magic-cookie-3d5ff3175bb849bc9812df936082ee20/BalanceProStudioOpen_${meetingId}`, 
-      width: '100%',
-      height: '100%',
-      parentNode: containerRef.current,
-      configOverwrite: {
-        // --- 🟢 BYPASS ALL GATES ---
-        lobby: { enabled: false },
-        enableLobby: false,
-        autoKnock: false,
-        prejoinPageEnabled: false,             // Bina kisi pre-screen ke direct video call chalu
-        requireDisplayName: false,
-        
-        // --- CROP & RESOLUTION FIXES ---
-        disableVideoFill: true,             
-        disableSelfViewSettings: false, 
-        doNotFlipLocalVideo: false,        
-        resolution: 720,                   
-        constraints: {
-            video: {
-                aspectRatio: 16 / 9,       
-            },
-        },
-        
-        apiAllowClickToJoin: true,
-        p2p: { enabled: true },
-        disableDeepLinking: true,
-      },
-      interfaceConfigOverwrite: {
-        VIDEO_LAYOUT_FIT: 'both',          
-        MOBILE_APP_PROMO: false,
-        TILE_VIEW_MAX_COLUMNS: 2,          
-        TOOLBAR_BUTTONS: [
-          'microphone', 'camera', 'fodeviceselection', 'hangup', 'chat', 'settings', 'tileview'
-        ],
-      },
-      userInfo: { 
-        displayName: userName + (isTrainer ? ' (Coach)' : '') 
-      },
+    // Critical browser permission permissions for audio/video stream
+    iframe.setAttribute('allow', 'camera; microphone; display-capture; autoplay; clipboard-write');
+    
+    containerRef.current.appendChild(iframe);
+    iframeRef.current = iframe;
+
+    // Handle postMessage events for leave or closing actions from inside iframe if possible
+    const handleMiroTalkEvents = (e: MessageEvent) => {
+      if (e.data === 'leave' || e.data?.type === 'mirotalk-leave') {
+        onLeave();
+      }
     };
 
-    try {
-      jitsiApiRef.current = new window.JitsiMeetExternalAPI(domain, options);
-      
-      const iframe = containerRef.current.querySelector('iframe');
-      if (iframe) {
-        // Permissions ensure karega ki camera/mic flawlessly chalein
-        iframe.setAttribute('allow', 'camera; microphone; display-capture; autoplay; clipboard-write');
-      }
-
-      jitsiApiRef.current.addEventListeners({
-        videoConferenceLeft: onLeave,
-        readyToClose: onLeave
-      });
-
-    } catch (e) {
-      console.error("Jitsi Load Error:", e);
-    }
+    window.addEventListener('message', handleMiroTalkEvents);
 
     return () => {
-      if (jitsiApiRef.current) {
-        jitsiApiRef.current.dispose();
-        jitsiApiRef.current = null;
+      window.removeEventListener('message', handleMiroTalkEvents);
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
       }
     };
   }, [meetingId, userName, isTrainer, onLeave]);
@@ -141,11 +105,12 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
 
   return (
     <div className="fixed inset-0 bg-zinc-950 flex flex-col z-50">
+      {/* Dynamic Status Bar */}
       <div className="h-14 bg-zinc-900 flex items-center justify-between px-4 border-b border-zinc-800">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-lime-500 shadow-[0_0_8px_#84cc16]"></div>
           <span className="text-[10px] font-bold uppercase tracking-tighter text-zinc-400">
-            {isTrainer ? 'Welcome Nitesh' : 'Welcome to'} • BalancePro Studio
+            {isTrainer ? 'Welcome Nitesh' : 'Welcome to'} • BalancePro Studio (MiroTalk WebRTC)
           </span>
         </div>
         <div className="flex gap-2">
@@ -160,8 +125,10 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
         </div>
       </div>
 
-      <div className="flex-1 bg-black" ref={containerRef} />
+      {/* Main Video Screen Window */}
+      <div className="flex-1 bg-black overflow-hidden" ref={containerRef} />
 
+      {/* Quick Invite List */}
       {showInviteModal && (
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-zinc-900 w-full max-w-xs rounded-3xl p-6 border border-zinc-800">
