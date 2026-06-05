@@ -24,6 +24,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<any>(null);
+  const initializedRef = useRef(false);
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [clients, setClients] = useState<UserProfile[]>([]);
@@ -53,40 +54,38 @@ const VideoCall: React.FC<VideoCallProps> = ({
     return () => unsub();
   }, [isTrainer]);
 
-  // Load Jitsi script safely (VERY IMPORTANT FIX)
+  // JITSI INIT (FIXED STABLE VERSION)
   useEffect(() => {
-    const loadJitsiScript = () => {
+    if (initializedRef.current) return; // prevent double init (React StrictMode fix)
+    initializedRef.current = true;
+
+    const loadScript = () => {
       return new Promise<void>((resolve) => {
         if (window.JitsiMeetExternalAPI) return resolve();
 
-        const existing = document.querySelector(
-          'script[src="https://meet.jit.si/external_api.js"]'
-        );
-
-        if (!existing) {
-          const script = document.createElement('script');
-          script.src = 'https://meet.jit.si/external_api.js';
-          script.async = true;
-          script.onload = () => resolve();
-          document.body.appendChild(script);
-        } else {
-          existing.addEventListener('load', () => resolve());
-        }
+        const script = document.createElement('script');
+        script.src = 'https://meet.jit.si/external_api.js';
+        script.async = true;
+        script.onload = () => resolve();
+        document.body.appendChild(script);
       });
     };
 
-    loadJitsiScript().then(() => {
+    loadScript().then(() => {
       if (!containerRef.current) return;
-      if (!window.JitsiMeetExternalAPI) return;
 
-      // destroy previous instance (IMPORTANT FIX)
+      // cleanup old instance
       if (apiRef.current) {
         apiRef.current.dispose();
         apiRef.current = null;
       }
 
+      containerRef.current.innerHTML = '';
+
       const domain = 'meet.jit.si';
-      const roomName = `BalanceProStudio_${meetingId}`;
+
+      // 🔥 IMPORTANT FIX: stable room name (NO random prefix issues)
+      const roomName = `balancepro-${meetingId}`;
 
       const options = {
         roomName,
@@ -103,12 +102,21 @@ const VideoCall: React.FC<VideoCallProps> = ({
           disableDeepLinking: true,
           startWithAudioMuted: false,
           startWithVideoMuted: false,
-          enableClosePage: false
+          enableWelcomePage: false,
+          enableClosePage: false,
+          requireDisplayName: false,
+
+          // 🔥 FIX FOR "moderator not arrived" / lobby behavior
+          lobby: {
+            enableChat: false
+          }
         },
 
         interfaceConfigOverwrite: {
           SHOW_JITSI_WATERMARK: false,
           SHOW_WATERMARK_FOR_GUESTS: false,
+          MOBILE_APP_PROMO: false,
+
           TOOLBAR_BUTTONS: [
             'microphone',
             'camera',
@@ -123,6 +131,11 @@ const VideoCall: React.FC<VideoCallProps> = ({
 
       apiRef.current = new window.JitsiMeetExternalAPI(domain, options);
 
+      // join instantly event safety
+      apiRef.current.addEventListener('videoConferenceJoined', () => {
+        console.log('Jitsi joined room');
+      });
+
       apiRef.current.addEventListener('videoConferenceLeft', () => {
         onLeave();
       });
@@ -136,7 +149,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
     };
   }, [meetingId, userName, isTrainer, onLeave]);
 
-  // Invite system (unchanged)
+  // Invite system
   const toggleInvite = async (uid: string) => {
     if (!currentClassData) return;
 
@@ -158,9 +171,9 @@ const VideoCall: React.FC<VideoCallProps> = ({
       {/* Top Bar */}
       <div className="h-14 bg-zinc-900 flex items-center justify-between px-4 border-b border-zinc-800">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-lime-500"></div>
+          <div className="w-2 h-2 rounded-full bg-lime-500" />
           <span className="text-[10px] font-bold uppercase text-zinc-400">
-            BalancePro • Jitsi Call
+            BalancePro • Live Class
           </span>
         </div>
 
