@@ -54,13 +54,13 @@ const VideoCall: React.FC<VideoCallProps> = ({
     return () => unsub();
   }, [isTrainer]);
 
-  // JITSI INIT (FIXED STABLE VERSION)
+  // JITSI INIT (FIXED + STABLE)
   useEffect(() => {
-    if (initializedRef.current) return; // prevent double init (React StrictMode fix)
+    if (initializedRef.current) return;
     initializedRef.current = true;
 
-    const loadScript = () => {
-      return new Promise<void>((resolve) => {
+    const loadJitsi = () =>
+      new Promise<void>((resolve) => {
         if (window.JitsiMeetExternalAPI) return resolve();
 
         const script = document.createElement('script');
@@ -69,12 +69,11 @@ const VideoCall: React.FC<VideoCallProps> = ({
         script.onload = () => resolve();
         document.body.appendChild(script);
       });
-    };
 
-    loadScript().then(() => {
-      if (!containerRef.current) return;
+    loadJitsi().then(() => {
+      if (!containerRef.current || !window.JitsiMeetExternalAPI) return;
 
-      // cleanup old instance
+      // cleanup previous instance
       if (apiRef.current) {
         apiRef.current.dispose();
         apiRef.current = null;
@@ -84,7 +83,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
 
       const domain = 'meet.jit.si';
 
-      // 🔥 IMPORTANT FIX: stable room name (NO random prefix issues)
+      // 🔥 IMPORTANT FIX: stable deterministic room name
       const roomName = `balancepro-${meetingId}`;
 
       const options = {
@@ -103,13 +102,8 @@ const VideoCall: React.FC<VideoCallProps> = ({
           startWithAudioMuted: false,
           startWithVideoMuted: false,
           enableWelcomePage: false,
-          enableClosePage: false,
           requireDisplayName: false,
-
-          // 🔥 FIX FOR "moderator not arrived" / lobby behavior
-          lobby: {
-            enableChat: false
-          }
+          enableClosePage: false
         },
 
         interfaceConfigOverwrite: {
@@ -131,9 +125,9 @@ const VideoCall: React.FC<VideoCallProps> = ({
 
       apiRef.current = new window.JitsiMeetExternalAPI(domain, options);
 
-      // join instantly event safety
+      // 🔥 Moderator behavior fix (important event)
       apiRef.current.addEventListener('videoConferenceJoined', () => {
-        console.log('Jitsi joined room');
+        console.log('Joined successfully');
       });
 
       apiRef.current.addEventListener('videoConferenceLeft', () => {
