@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { UserProfile, UserRole, ActiveClass } from '../types';
-import { db } from '../services/firebaseService'; 
-import { ref, onValue, set } from 'firebase/database';
+import { db } from '../services/firebaseService';
+import { ref, onValue, set, get } from 'firebase/database';
 
 interface VideoCallProps {
   meetingId: string;
@@ -41,64 +41,98 @@ const VideoCall: React.FC<VideoCallProps> = ({
     });
 
     if (isTrainer) {
-      import('firebase/database').then(({ get }) => {
-        get(ref(db, 'users')).then((snap) => {
-          const data = snap.val();
-          if (data) {
-            const allUsers = Object.values(data) as UserProfile[];
-            setClients(allUsers.filter(u => u.role === UserRole.CLIENT));
-          }
-        });
+      get(ref(db, 'users')).then((snap) => {
+        const data = snap.val();
+        if (data) {
+          const allUsers = Object.values(data) as UserProfile[];
+          setClients(allUsers.filter(u => u.role === UserRole.CLIENT));
+        }
       });
     }
 
     return () => unsub();
   }, [isTrainer]);
 
-  // JITSI INIT (IMPORTANT PART)
+  // Load Jitsi script safely (VERY IMPORTANT FIX)
   useEffect(() => {
-    if (!containerRef.current || !window.JitsiMeetExternalAPI) return;
+    const loadJitsiScript = () => {
+      return new Promise<void>((resolve) => {
+        if (window.JitsiMeetExternalAPI) return resolve();
 
-    const domain = "meet.jit.si";
-    const roomName = `BalanceProStudio_${meetingId}`;
+        const existing = document.querySelector(
+          'script[src="https://meet.jit.si/external_api.js"]'
+        );
 
-    const options = {
-      roomName,
-      parentNode: containerRef.current,
-      width: '100%',
-      height: '100%',
-      userInfo: {
-        displayName: userName + (isTrainer ? ' (Coach)' : '')
-      },
-      configOverwrite: {
-        startWithAudioMuted: false,
-        startWithVideoMuted: false,
-        prejoinPageEnabled: false,   // IMPORTANT → no extra screen
-        disableDeepLinking: true
-      },
-      interfaceConfigOverwrite: {
-        SHOW_JITSI_WATERMARK: false,
-        SHOW_WATERMARK_FOR_GUESTS: false,
-        TOOLBAR_BUTTONS: [
-          'microphone',
-          'camera',
-          'chat',
-          'hangup',
-          'tileview',
-          'fullscreen',
-          'raisehand'
-        ]
-      }
+        if (!existing) {
+          const script = document.createElement('script');
+          script.src = 'https://meet.jit.si/external_api.js';
+          script.async = true;
+          script.onload = () => resolve();
+          document.body.appendChild(script);
+        } else {
+          existing.addEventListener('load', () => resolve());
+        }
+      });
     };
 
-    apiRef.current = new window.JitsiMeetExternalAPI(domain, options);
+    loadJitsiScript().then(() => {
+      if (!containerRef.current) return;
+      if (!window.JitsiMeetExternalAPI) return;
 
-    apiRef.current.addEventListener('videoConferenceLeft', () => {
-      onLeave();
+      // destroy previous instance (IMPORTANT FIX)
+      if (apiRef.current) {
+        apiRef.current.dispose();
+        apiRef.current = null;
+      }
+
+      const domain = 'meet.jit.si';
+      const roomName = `BalanceProStudio_${meetingId}`;
+
+      const options = {
+        roomName,
+        parentNode: containerRef.current,
+        width: '100%',
+        height: '100%',
+
+        userInfo: {
+          displayName: userName + (isTrainer ? ' (Coach)' : '')
+        },
+
+        configOverwrite: {
+          prejoinPageEnabled: false,
+          disableDeepLinking: true,
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+          enableClosePage: false
+        },
+
+        interfaceConfigOverwrite: {
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_WATERMARK_FOR_GUESTS: false,
+          TOOLBAR_BUTTONS: [
+            'microphone',
+            'camera',
+            'chat',
+            'hangup',
+            'tileview',
+            'fullscreen',
+            'raisehand'
+          ]
+        }
+      };
+
+      apiRef.current = new window.JitsiMeetExternalAPI(domain, options);
+
+      apiRef.current.addEventListener('videoConferenceLeft', () => {
+        onLeave();
+      });
     });
 
     return () => {
-      apiRef.current?.dispose();
+      if (apiRef.current) {
+        apiRef.current.dispose();
+        apiRef.current = null;
+      }
     };
   }, [meetingId, userName, isTrainer, onLeave]);
 
