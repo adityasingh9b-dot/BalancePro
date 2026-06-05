@@ -54,28 +54,21 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
       jitsiApiRef.current.dispose();
     }
 
-    // 🟢 CHANGED DOMAIN: frame-ancestors bypass karne ke liye standard open-source instance
-    const domain = 'meet.jit.si';
+    // 🟢 100% UNRESTRICTED EMBEDDING DOMAIN: Koi account authorization ya host condition nahi hai
+    const domain = 'meet.gwdg.de';
     
     const options = {
-      // 🟢 HYPER UNIQUE ROOM NAME: Isse koi pehle se join karke automatic moderator nahi ban payega
-      roomName: `BalanceProStudio_FreeForAll_Session_${meetingId}_${Math.floor(100000 + Math.random() * 900000)}`, 
+      roomName: `BalanceProStudio_Session_${meetingId}`, 
       width: '100%',
       height: '100%',
       parentNode: containerRef.current,
       configOverwrite: {
-        // --- 🟢 ULTRA OPEN BYPASS MODE ---
+        // --- 🟢 FREE FOR ALL BYPASSES ---
         lobby: { enabled: false },
         enableLobby: false,
         autoKnock: false,
-        prejoinPageEnabled: false,             // Seedhe video conference andar gusaega
+        prejoinPageEnabled: false,             // Seedhe meeting room ke andar pipeline entry
         requireDisplayName: false,
-        
-        // --- BYPASS HOST / MODERATOR LOCKS ---
-        disableModeratorIndicator: true,
-        securityUi: {
-          disableSelectablePassword: true,     // Password ka scene hi khatam
-        },
         
         // --- CROP & RESOLUTION FIXES ---
         disableVideoFill: true,             
@@ -110,7 +103,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
       
       const iframe = containerRef.current.querySelector('iframe');
       if (iframe) {
-        // Console log me jo 'speaker-selection' ka error tha use remove karne ke liye custom allow policies set ki hain
         iframe.setAttribute('allow', 'camera; microphone; display-capture; autoplay; clipboard-write');
       }
 
@@ -131,7 +123,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
     };
   }, [meetingId, userName, isTrainer, onLeave]);
 
-  // Firebase toggle function as is...
   const toggleInvite = async (uid: string) => {
     if (!currentClassData) return;
     const newInvited = invitedUids.includes(uid) 
