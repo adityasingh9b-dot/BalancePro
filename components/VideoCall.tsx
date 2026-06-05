@@ -54,27 +54,27 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
       jitsiApiRef.current.dispose();
     }
 
-    // 🟢 BACK TO COMPLETELY UNRESTRICTED SERVER: Is domain par koi host/login policy nahi hai
-    const domain = 'meet.ffmuc.net';
+    // 🟢 CHANGED DOMAIN: frame-ancestors bypass karne ke liye standard open-source instance
+    const domain = 'meet.jit.si';
     
     const options = {
-      // 🟢 CLEAN ROOM NAME: Bilkul simple open access room name
-      roomName: `BalanceProStudioRoom_${meetingId}`, 
+      // 🟢 HYPER UNIQUE ROOM NAME: Isse koi pehle se join karke automatic moderator nahi ban payega
+      roomName: `BalanceProStudio_FreeForAll_Session_${meetingId}_${Math.floor(100000 + Math.random() * 900000)}`, 
       width: '100%',
       height: '100%',
       parentNode: containerRef.current,
       configOverwrite: {
-        // --- 🟢 NO HOST / NO SAFETY / BYPASS EVERY SECURITY ---
+        // --- 🟢 ULTRA OPEN BYPASS MODE ---
         lobby: { enabled: false },
         enableLobby: false,
         autoKnock: false,
-        prejoinPageEnabled: false,             // Kisi ko bhi wait na karna pade, seedhe screen aaye
+        prejoinPageEnabled: false,             // Seedhe video conference andar gusaega
         requireDisplayName: false,
-        roles: {
-          moderator: false                    // 'No Professor/No Host' mode activate karne ke liye
-        },
+        
+        // --- BYPASS HOST / MODERATOR LOCKS ---
+        disableModeratorIndicator: true,
         securityUi: {
-          disableSelectablePassword: true,
+          disableSelectablePassword: true,     // Password ka scene hi khatam
         },
         
         // --- CROP & RESOLUTION FIXES ---
@@ -87,16 +87,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
                 aspectRatio: 16 / 9,       
             },
         },
-        
-        // --- AUDIO COMPATIBILITY ---
-        disableAudioLevels: false,
-        audioEnumerationInterval: 500,
-        enableNoAudioDetection: true,
-        enableNoisyMicDetection: true,
-        disableAP: false, 
-        disableAEC: false, 
-        disableNS: false,  
-        disableAGC: false, 
         
         apiAllowClickToJoin: true,
         p2p: { enabled: true },
@@ -120,7 +110,8 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
       
       const iframe = containerRef.current.querySelector('iframe');
       if (iframe) {
-        iframe.setAttribute('allow', 'camera; microphone; display-capture; autoplay; clipboard-write; speaker-selection');
+        // Console log me jo 'speaker-selection' ka error tha use remove karne ke liye custom allow policies set ki hain
+        iframe.setAttribute('allow', 'camera; microphone; display-capture; autoplay; clipboard-write');
       }
 
       jitsiApiRef.current.addEventListeners({
@@ -140,6 +131,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
     };
   }, [meetingId, userName, isTrainer, onLeave]);
 
+  // Firebase toggle function as is...
   const toggleInvite = async (uid: string) => {
     if (!currentClassData) return;
     const newInvited = invitedUids.includes(uid) 
