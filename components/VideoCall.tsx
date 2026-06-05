@@ -55,11 +55,12 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
       jitsiApiRef.current.dispose();
     }
 
-    // 🟢 CHANGED DOMAIN: meet.ffmuc.net se 8x8.vc ya meet.jit.si par shift kiya taaki bina token/auth ke room create ho sake
-    const domain = '8x8.vc';
+    // 🟢 FIXED: Server ko pure public meet.jit.si par rakha hai bina kisi authorization restriction ke
+    const domain = 'meet.jit.si';
     
     const options = {
-      roomName: `vpaas-magic-cookie-3d5ff3175bb849bc9812df936082ee20/BalanceProStudio_${meetingId}`, 
+      // 🟢 FIXED: Premium cookie token prefix poori tarah remove kar diya taaki link open access rhe
+      roomName: `BalanceProStudio_${meetingId}`, 
       width: '100%',
       height: '100%',
       parentNode: containerRef.current,
@@ -94,7 +95,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
         apiAllowClickToJoin: true,
         p2p: { enabled: true },
         disableDeepLinking: true,
-        lobby: { enabled: false },
+        lobby: { enabled: false }, // 🟢 Ensure lobby/waiting room is disabled
       },
       interfaceConfigOverwrite: {
         // --- 🟢 UI LAYOUT FIX ---

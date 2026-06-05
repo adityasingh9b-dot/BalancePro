@@ -9,32 +9,26 @@
   
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Jitsi API script updated to standard domain -->
-  <script src="https://8x8.vc/external_api.js"></script>
+  <script src="https://meet.jit.si/external_api.js"></script>
 
-  <!-- 1. PWA Manifest Link & Theme Setup for BalancePro -->
   <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#a3e635" /> <!-- Lime 400 accent color -->
-</head>
+  <meta name="theme-color" content="#a3e635" /> </head>
 <body class="bg-zinc-950 text-zinc-100 antialiased min-h-screen">
   
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 
-  <!-- 2. Premium Bottom Action Sheet for App Installation -->
   <div id="install-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: #18181b; border-top: 3px solid #a3e635; padding: 20px; border-top-left-radius: 24px; border-top-right-radius: 24px; box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.7); display: none; z-index: 99999; font-family: system-ui, -apple-system, sans-serif;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
       <div style="display: flex; align-items: center; gap: 14px;">
-        <!-- App Icon (Make sure you put a logo icon image at this path or replace it) -->
         <div style="width: 48px; height: 48px; background: #27272a; display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid #3f3f46;">
           <span style="color: #a3e635; font-weight: 900; font-size: 1.2rem;">BP</span>
         </div>
         <div>
-          <h4 style="margin: 0; color: #ffffff; font-size: 1.05rem; font-weight: 700; uppercase; tracking-tight;">Install BalancePro App</h4>
+          <h4 style="margin: 0; color: #ffffff; font-size: 1.05rem; font-weight: 700; text-transform: uppercase; tracking-tight;">Install BalancePro App</h4>
           <p style="margin: 2px 0 0 0; color: #a1a1aa; font-size: 0.8rem;">Add to Home Screen for one-tap live access</p>
         </div>
       </div>
-      <!-- Close Button cross icon -->
       <button id="btn-close-banner" style="background: none; border: none; color: #a1a1aa; font-size: 1.6rem; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
     </div>
     <button id="btn-install" style="background: #a3e635; color: #000000; border: none; width: 100%; padding: 14px; font-size: 0.9rem; font-weight: 800; border-radius: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(163, 230, 53, 0.25);">
@@ -42,7 +36,6 @@
     </button>
   </div>
 
-  <!-- 3. PWA Installation Engine Core Scripts -->
   <script>
     let deferredPrompt = null;
     const installBanner = document.getElementById('install-banner');
