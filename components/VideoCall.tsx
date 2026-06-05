@@ -10,12 +10,6 @@ interface VideoCallProps {
   isTrainer: boolean;
 }
 
-declare global {
-  interface Window {
-    MiroTalkAPI: any;
-  }
-}
-
 const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isTrainer }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -23,6 +17,35 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
   const [clients, setClients] = useState<UserProfile[]>([]);
   const [invitedUids, setInvitedUids] = useState<string[]>([]);
   const [currentClassData, setCurrentClassData] = useState<ActiveClass | null>(null);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+
+  // 🟢 CORE SECURITY ENGINE: Mobile PWA Standalone Shortcut ke andar Device Permissions Force-Trigger karne ke liye
+  useEffect(() => {
+    const askHardwarePermissions = async () => {
+      try {
+        console.log("PWA Engine: Requesting explicit camera and mic hardware tokens...");
+        
+        // Mobile browser ko force karega Native Popup dikhane ke liye
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, aspectRatio: 16/9 }, 
+          audio: true 
+        });
+        
+        console.log("PWA Engine: Hardware access granted successfully!");
+        
+        // Permission milte hi immediate stream track close karo taaki MiroTalk Iframe camera ko consume kar sake
+        stream.getTracks().forEach(track => track.stop());
+        setPermissionError(null);
+      } catch (err: any) {
+        console.error("PWA Permission Denied or Blocked:", err);
+        setPermissionError(
+          "Camera aur Microphone access blocked hai. Kripya apne browser ya mobile app settings mein jaakar manually permission allow karein."
+        );
+      }
+    };
+
+    askHardwarePermissions();
+  }, []);
 
   useEffect(() => {
     const unsub = onValue(ref(db, 'active_class'), (snap) => {
@@ -50,10 +73,9 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Remove old iframe if any
+    // Remove old instance
     containerRef.current.innerHTML = '';
 
-    // 🟢 MIROTALK PUBLIC ENDPOINT: 100% Free For All (No Login / No Moderator required)
     const roomName = `BalanceProStudio_${meetingId}`;
     const mirotalkUrl = `https://p2p.mirotalk.com/join/?room=${roomName}&name=${encodeURIComponent(
       userName + (isTrainer ? ' (Coach)' : '')
@@ -66,13 +88,12 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
     iframe.style.height = '100%';
     iframe.style.border = 'none';
     
-    // Critical browser permission permissions for audio/video stream
-    iframe.setAttribute('allow', 'camera; microphone; display-capture; autoplay; clipboard-write');
+    // 🟢 CRITICAL PWA BYPASS POLICY: Mobile PWA context me iframe permissions mandatory hain
+    iframe.setAttribute('allow', 'camera *; microphone *; display-capture *; autoplay; clipboard-write');
     
     containerRef.current.appendChild(iframe);
     iframeRef.current = iframe;
 
-    // Handle postMessage events for leave or closing actions from inside iframe if possible
     const handleMiroTalkEvents = (e: MessageEvent) => {
       if (e.data === 'leave' || e.data?.type === 'mirotalk-leave') {
         onLeave();
@@ -110,7 +131,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-lime-500 shadow-[0_0_8px_#84cc16]"></div>
           <span className="text-[10px] font-bold uppercase tracking-tighter text-zinc-400">
-            {isTrainer ? 'Welcome Nitesh' : 'Welcome to'} • BalancePro Studio (MiroTalk WebRTC)
+            {isTrainer ? 'Welcome Nitesh' : 'Welcome to'} • BalancePro Studio
           </span>
         </div>
         <div className="flex gap-2">
@@ -124,6 +145,13 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
           </button>
         </div>
       </div>
+
+      {/* 🔴 DYNAMIC PERMISSION ERROR CALLOUT BANNER */}
+      {permissionError && (
+        <div className="bg-red-950 border-b border-red-800 px-4 py-3 text-center">
+          <p className="text-red-400 text-xs font-semibold">{permissionError}</p>
+        </div>
+      )}
 
       {/* Main Video Screen Window */}
       <div className="flex-1 bg-black overflow-hidden" ref={containerRef} />
