@@ -27,6 +27,16 @@ const App: React.FC = () => {
       console.error("Auth initialization failed:", error);
       setAuth({ user: null, loading: false });
     }
+
+    // 🟢 PWA ENGINE: Register background worker for shortcut installation setup
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('/sw.js')
+          .then(() => console.log('BalancePro Engine: ServiceWorker Active'))
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
   }, []);
 
   const handleLogin = (user: UserProfile) => {
