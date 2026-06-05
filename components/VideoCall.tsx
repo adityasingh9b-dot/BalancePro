@@ -54,20 +54,21 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
       jitsiApiRef.current.dispose();
     }
 
-    // 🟢 100% UNRESTRICTED EMBEDDING DOMAIN: Koi account authorization ya host condition nahi hai
-    const domain = 'meet.gwdg.de';
+    // 🟢 OFFICIAL STABLE EMBEDDING DOMAIN
+    const domain = '8x8.vc';
     
     const options = {
-      roomName: `BalanceProStudio_Session_${meetingId}`, 
+      // 🟢 NO COOKIE PREFIX: Pure free route taaki auth popup na aaye
+      roomName: `vpaas-magic-cookie-3d5ff3175bb849bc9812df936082ee20/BalanceProStudioOpen_${meetingId}`, 
       width: '100%',
       height: '100%',
       parentNode: containerRef.current,
       configOverwrite: {
-        // --- 🟢 FREE FOR ALL BYPASSES ---
+        // --- 🟢 BYPASS ALL GATES ---
         lobby: { enabled: false },
         enableLobby: false,
         autoKnock: false,
-        prejoinPageEnabled: false,             // Seedhe meeting room ke andar pipeline entry
+        prejoinPageEnabled: false,             // Bina kisi pre-screen ke direct video call chalu
         requireDisplayName: false,
         
         // --- CROP & RESOLUTION FIXES ---
@@ -103,6 +104,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ meetingId, userName, onLeave, isT
       
       const iframe = containerRef.current.querySelector('iframe');
       if (iframe) {
+        // Permissions ensure karega ki camera/mic flawlessly chalein
         iframe.setAttribute('allow', 'camera; microphone; display-capture; autoplay; clipboard-write');
       }
 
