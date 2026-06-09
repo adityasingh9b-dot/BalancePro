@@ -10,12 +10,6 @@ interface VideoCallProps {
   isTrainer: boolean;
 }
 
-declare global {
-  interface Window {
-    JitsiMeetExternalAPI: any;
-  }
-}
-
 const VideoCall: React.FC<VideoCallProps> = ({
   meetingId,
   userName,
@@ -24,7 +18,6 @@ const VideoCall: React.FC<VideoCallProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<any>(null);
-  const initializedRef = useRef(false);
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [clients, setClients] = useState<UserProfile[]>([]);
@@ -54,95 +47,94 @@ const VideoCall: React.FC<VideoCallProps> = ({
     return () => unsub();
   }, [isTrainer]);
 
-  // 🟢 COMPLETELY UNRESTRICTED CORE JITSI DEPLOYMENT ENGINE
+  // 🟢 BULLETPROOF JITSI ENGINE (Fixes Black Screen & Auth Errors)
   useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    let isMounted = true;
+    
+    // ⚡ UNRESTRICTED GLOBAL SERVER: Zero Moderator Locks
+    const domain = 'meet.ffmuc.net';
 
-    // ⚡ UNRESTRICTED DEVELOPER HOST ROUTE
-    const domain = 'meet.gwdg.de';
-
-    const injectJitsiScript = () =>
-      new Promise<void>((resolve) => {
-        if (window.JitsiMeetExternalAPI) return resolve();
-
-        const script = document.createElement('script');
-        // Instantiating script source mapping specifically to the hostless backend domain
-        script.src = `https://${domain}/external_api.js`;
-        script.async = true;
-        script.onload = () => resolve();
-        document.body.appendChild(script);
-      });
-
-    injectJitsiScript().then(() => {
-      if (!containerRef.current || !window.JitsiMeetExternalAPI) return;
-
-      if (apiRef.current) {
-        apiRef.current.dispose();
-        apiRef.current = null;
-      }
-
-      containerRef.current.innerHTML = '';
-      
-      // Sanitized unique lowercase alphanumeric room string setup
-      const cleanRoomName = `balanceprostudio-${meetingId.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-
-      const options = {
-        roomName: cleanRoomName,
-        parentNode: containerRef.current,
-        width: '100%',
-        height: '100%',
-        userInfo: {
-          displayName: userName + (isTrainer ? ' (Coach)' : '')
-        },
-        configOverwrite: {
-          prejoinPageEnabled: false,       // Direct injection bypassing prompt views
-          disableDeepLinking: true,        
-          startWithAudioMuted: false,       
-          startWithVideoMuted: false,       
-          enableWelcomePage: false,
-          enableLobby: false,              // Hard disabled locker loops
-          lobby: { enabled: false },
-          requireDisplayName: false,
-          enableClosePage: false
-        },
-        interfaceConfigOverwrite: {
-          SHOW_JITSI_WATERMARK: false,
-          SHOW_WATERMARK_FOR_GUESTS: false,
-          MOBILE_APP_PROMO: false,         
-          TOOLBAR_BUTTONS: [
-            'microphone',
-            'camera',
-            'chat',
-            'hangup',
-            'tileview',
-            'fullscreen'
-          ]
-        }
-      };
-
+    const initializeJitsi = async () => {
       try {
-        apiRef.current = new window.JitsiMeetExternalAPI(domain, options);
+        // 🔥 CRITICAL FIX 1: Nuke all cached/old script instances to prevent origin clash
+        const oldScripts = document.querySelectorAll('script[src*="external_api.js"]');
+        oldScripts.forEach(script => script.remove());
 
+        // 🔥 CRITICAL FIX 2: Wipe the window object reference explicitly
+        (window as any).JitsiMeetExternalAPI = undefined;
+
+        // 3. Inject fresh script dynamically
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = `https://${domain}/external_api.js`;
+          script.async = true;
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("Failed to load Jitsi Engine"));
+          document.body.appendChild(script);
+        });
+
+        // Abort if component unmounted while downloading script
+        if (!isMounted || !containerRef.current || !(window as any).JitsiMeetExternalAPI) return;
+
+        // Clean out any ghost iframes
+        containerRef.current.innerHTML = '';
+        
+        // Secure formatting for room id
+        const safeRoomId = `BalanceProStudio_${meetingId.replace(/[^a-zA-Z0-9]/g, '')}`;
+
+        const options = {
+          roomName: safeRoomId,
+          parentNode: containerRef.current,
+          width: '100%',
+          height: '100%',
+          userInfo: {
+            displayName: userName ? `${userName}${isTrainer ? ' (Coach)' : ''}` : 'Participant'
+          },
+          configOverwrite: {
+            prejoinPageEnabled: false,       // Bypass all initial screens
+            disableDeepLinking: true,        // Force stay in web app context
+            startWithAudioMuted: false,       
+            startWithVideoMuted: false,       
+            enableWelcomePage: false,
+            enableLobby: false,              // Hard kill waiting room logic
+            lobby: { enabled: false },
+            requireDisplayName: false,
+          },
+          interfaceConfigOverwrite: {
+            SHOW_JITSI_WATERMARK: false,
+            SHOW_WATERMARK_FOR_GUESTS: false,
+            MOBILE_APP_PROMO: false,         
+            TOOLBAR_BUTTONS: [
+              'microphone', 'camera', 'chat', 'hangup', 'tileview', 'fullscreen'
+            ]
+          }
+        };
+
+        apiRef.current = new (window as any).JitsiMeetExternalAPI(domain, options);
+
+        // Hardware hardware permission pass-through injection
         const iframe = containerRef.current.querySelector('iframe');
         if (iframe) {
           iframe.setAttribute('allow', 'camera *; microphone *; display-capture *; autoplay *; fullscreen *');
         }
 
         apiRef.current.addEventListener('videoConferenceLeft', () => {
-          onLeave();
+          if (isMounted) onLeave();
         });
         
         apiRef.current.addEventListener('readyToClose', () => {
-          onLeave();
+          if (isMounted) onLeave();
         });
 
       } catch (err) {
-        console.error("Jitsi Boot Fail Lifecycle:", err);
+        console.error("Jitsi Setup Lifecycle Crash:", err);
       }
-    });
+    };
+
+    initializeJitsi();
 
     return () => {
+      isMounted = false;
       if (apiRef.current) {
         apiRef.current.dispose();
         apiRef.current = null;
@@ -181,7 +173,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
           {isTrainer && (
             <button
               onClick={() => setShowInviteModal(true)}
-              className="text-[10px] font-bold bg-lime-400 text-black px-4 py-2 rounded-full uppercase"
+              className="text-[10px] font-bold bg-lime-400 text-black px-4 py-2 rounded-full uppercase transition-colors hover:bg-lime-300"
             >
               Invite
             </button>
@@ -189,7 +181,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
 
           <button
             onClick={onLeave}
-            className="text-[10px] font-bold text-zinc-400 px-4 py-2 rounded-full border border-zinc-800 uppercase"
+            className="text-[10px] font-bold text-zinc-400 px-4 py-2 rounded-full border border-zinc-800 uppercase transition-colors hover:bg-zinc-800"
           >
             Exit
           </button>
@@ -197,35 +189,36 @@ const VideoCall: React.FC<VideoCallProps> = ({
       </div>
 
       {/* Main Core Framework Target Element */}
-      <div className="flex-1 bg-black" ref={containerRef} />
+      <div className="flex-1 bg-black relative" ref={containerRef}>
+         {/* The API target handles its own internal loading state natively now */}
+      </div>
 
       {/* Invite System Modal Wrapper */}
       {showInviteModal && (
         <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="bg-zinc-900 w-full max-w-xs rounded-3xl p-6 border border-zinc-800">
+          <div className="bg-zinc-900 w-full max-w-xs rounded-3xl p-6 border border-zinc-800 shadow-2xl">
             <h3 className="text-white font-bold mb-4 uppercase text-sm">
               Select Clients
             </h3>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
               {clients.map(client => (
                 <label
                   key={client.uid}
-                  className="flex items-center justify-between p-3 bg-zinc-800 rounded-xl"
+                  className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-xl cursor-pointer hover:bg-zinc-800 transition-colors"
                 >
                   <span className="text-xs text-zinc-200">{client.name}</span>
                   <input
                     type="checkbox"
                     checked={invitedUids.includes(client.uid)}
                     onChange={() => toggleInvite(client.uid)}
-                    className="accent-lime-400"
-                    // Add standard key strings during map execution loops
+                    className="accent-lime-400 w-4 h-4"
                   />
                 </label>
               ))}
             </div>
             <button
               onClick={() => setShowInviteModal(false)}
-              className="w-full mt-6 bg-white text-black py-3 rounded-xl font-bold text-xs uppercase"
+              className="w-full mt-6 bg-white text-black py-3 rounded-xl font-bold text-xs uppercase hover:bg-zinc-200 transition-colors"
             >
               Done
             </button>
