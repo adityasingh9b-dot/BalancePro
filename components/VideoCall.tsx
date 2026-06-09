@@ -10,12 +10,6 @@ interface VideoCallProps {
   isTrainer: boolean;
 }
 
-declare global {
-  interface Window {
-    JitsiMeetExternalAPI: any;
-  }
-}
-
 const VideoCall: React.FC<VideoCallProps> = ({
   meetingId,
   userName,
@@ -23,9 +17,6 @@ const VideoCall: React.FC<VideoCallProps> = ({
   isTrainer
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const apiRef = useRef<any>(null);
-  const initializedRef = useRef(false);
-
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [clients, setClients] = useState<UserProfile[]>([]);
   const [invitedUids, setInvitedUids] = useState<string[]>([]);
@@ -54,94 +45,40 @@ const VideoCall: React.FC<VideoCallProps> = ({
     return () => unsub();
   }, [isTrainer]);
 
-  // JITSI INIT (FIXED + STABLE)
+  // 🟢 ZOOM WEB WEB-CLIENT ENGINE LAYER
   useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    if (!containerRef.current) return;
 
-    const loadJitsi = () =>
-      new Promise<void>((resolve) => {
-        if (window.JitsiMeetExternalAPI) return resolve();
+    // Purane dom structure ko clean karo
+    containerRef.current.innerHTML = '';
 
-        const script = document.createElement('script');
-        script.src = 'https://meet.jit.si/external_api.js';
-        script.async = true;
-        script.onload = () => resolve();
-        document.body.appendChild(script);
-      });
+    // Zoom Room Identifier Formulation
+    // Meeting ID se kisi bhi tarah ke spaces ya dashes ko clean kar lo
+    const cleanMeetingId = meetingId.replace(/[^0-9]/g, '') || '8456123974'; // Fallback sample numeric id
+    
+    // Zoom Web Client Iframe Endpoint Injection
+    // Is template parameter string ke use se bina direct application open kiye client web layer par hi bypass ho jata hai
+    const zoomWebUrl = `https://zoom.us/wc/join/${cleanMeetingId}?un=${encodeURIComponent(
+      userName + (isTrainer ? ' (Coach)' : '')
+    )}`;
 
-    loadJitsi().then(() => {
-      if (!containerRef.current || !window.JitsiMeetExternalAPI) return;
+    const iframe = document.createElement('iframe');
+    iframe.src = zoomWebUrl;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    
+    // PWA sandbox contexts ke andar hardware pipe capture policy open karna mandatory hai
+    iframe.setAttribute('allow', 'camera *; microphone *; display-capture *; autoplay *; fullscreen *');
 
-      // cleanup previous instance
-      if (apiRef.current) {
-        apiRef.current.dispose();
-        apiRef.current = null;
-      }
-
-      containerRef.current.innerHTML = '';
-
-      const domain = 'meet.jit.si';
-
-      // 🔥 IMPORTANT FIX: stable deterministic room name
-      const roomName = `balancepro-${meetingId}`;
-
-      const options = {
-        roomName,
-        parentNode: containerRef.current,
-        width: '100%',
-        height: '100%',
-
-        userInfo: {
-          displayName: userName + (isTrainer ? ' (Coach)' : '')
-        },
-
-        configOverwrite: {
-          prejoinPageEnabled: false,
-          disableDeepLinking: true,
-          startWithAudioMuted: false,
-          startWithVideoMuted: false,
-          enableWelcomePage: false,
-          requireDisplayName: false,
-          enableClosePage: false
-        },
-
-        interfaceConfigOverwrite: {
-          SHOW_JITSI_WATERMARK: false,
-          SHOW_WATERMARK_FOR_GUESTS: false,
-          MOBILE_APP_PROMO: false,
-
-          TOOLBAR_BUTTONS: [
-            'microphone',
-            'camera',
-            'chat',
-            'hangup',
-            'tileview',
-            'fullscreen',
-            'raisehand'
-          ]
-        }
-      };
-
-      apiRef.current = new window.JitsiMeetExternalAPI(domain, options);
-
-      // 🔥 Moderator behavior fix (important event)
-      apiRef.current.addEventListener('videoConferenceJoined', () => {
-        console.log('Joined successfully');
-      });
-
-      apiRef.current.addEventListener('videoConferenceLeft', () => {
-        onLeave();
-      });
-    });
+    containerRef.current.appendChild(iframe);
 
     return () => {
-      if (apiRef.current) {
-        apiRef.current.dispose();
-        apiRef.current = null;
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
       }
     };
-  }, [meetingId, userName, isTrainer, onLeave]);
+  }, [meetingId, userName, isTrainer]);
 
   // Invite system
   const toggleInvite = async (uid: string) => {
@@ -165,9 +102,9 @@ const VideoCall: React.FC<VideoCallProps> = ({
       {/* Top Bar */}
       <div className="h-14 bg-zinc-900 flex items-center justify-between px-4 border-b border-zinc-800">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-lime-500" />
-          <span className="text-[10px] font-bold uppercase text-zinc-400">
-            BalancePro • Live Class
+          <div className="w-2 h-2 rounded-full bg-lime-500 shadow-[0_0_8px_#84cc16]" />
+          <span className="text-[10px] font-bold uppercase text-zinc-400 tracking-tighter">
+            BalancePro • Zoom Live Class
           </span>
         </div>
 
@@ -191,11 +128,11 @@ const VideoCall: React.FC<VideoCallProps> = ({
       </div>
 
       {/* Video Area */}
-      <div className="flex-1 bg-black" ref={containerRef} />
+      <div className="flex-1 bg-black overflow-hidden" ref={containerRef} />
 
       {/* Invite Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-zinc-900 w-full max-w-xs rounded-3xl p-6 border border-zinc-800">
 
             <h3 className="text-white font-bold mb-4 uppercase text-sm">
