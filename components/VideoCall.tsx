@@ -47,40 +47,39 @@ const VideoCall: React.FC<VideoCallProps> = ({
     return () => unsub();
   }, [isTrainer]);
 
-  // 🟢 BULLETPROOF JITSI ENGINE (Fixes Black Screen & Auth Errors)
+  // 🟢 UNRESTRICTED PREMIUM JITSI ENGINE (Fixes CSP Frame & Connection Refused Errors)
   useEffect(() => {
     let isMounted = true;
     
-    // ⚡ UNRESTRICTED GLOBAL SERVER: Zero Moderator Locks
-    const domain = 'meet.ffmuc.net';
+    // ⚡ STABLE ACADEMIC SERVER: Allows dynamic iframe embeds with zero auth loops
+    const domain = 'meet.gwdg.de';
 
     const initializeJitsi = async () => {
       try {
-        // 🔥 CRITICAL FIX 1: Nuke all cached/old script instances to prevent origin clash
+        // 🔥 CRITICAL FIX 1: Purely wipe any existing old Jitsi scripts to prevent origin cross-contamination
         const oldScripts = document.querySelectorAll('script[src*="external_api.js"]');
         oldScripts.forEach(script => script.remove());
 
-        // 🔥 CRITICAL FIX 2: Wipe the window object reference explicitly
+        // 🔥 CRITICAL FIX 2: Reset window level instance reference explicitly
         (window as any).JitsiMeetExternalAPI = undefined;
 
-        // 3. Inject fresh script dynamically
+        // 3. Inject fresh script aligned with the active domain
         await new Promise<void>((resolve, reject) => {
           const script = document.createElement('script');
           script.src = `https://${domain}/external_api.js`;
           script.async = true;
           script.onload = () => resolve();
-          script.onerror = () => reject(new Error("Failed to load Jitsi Engine"));
+          script.onerror = () => reject(new Error("Jitsi Core Engine download failed"));
           document.body.appendChild(script);
         });
 
-        // Abort if component unmounted while downloading script
         if (!isMounted || !containerRef.current || !(window as any).JitsiMeetExternalAPI) return;
 
-        // Clean out any ghost iframes
+        // Force clean container
         containerRef.current.innerHTML = '';
         
-        // Secure formatting for room id
-        const safeRoomId = `BalanceProStudio_${meetingId.replace(/[^a-zA-Z0-9]/g, '')}`;
+        // Lowercase clean alphanumeric room ID mapping
+        const safeRoomId = `balanceprostudio${meetingId.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
 
         const options = {
           roomName: safeRoomId,
@@ -91,14 +90,15 @@ const VideoCall: React.FC<VideoCallProps> = ({
             displayName: userName ? `${userName}${isTrainer ? ' (Coach)' : ''}` : 'Participant'
           },
           configOverwrite: {
-            prejoinPageEnabled: false,       // Bypass all initial screens
-            disableDeepLinking: true,        // Force stay in web app context
+            prejoinPageEnabled: false,       // Skip configuration/prompt views completely
+            disableDeepLinking: true,        // Prevent forcing users into native app prompts
             startWithAudioMuted: false,       
             startWithVideoMuted: false,       
             enableWelcomePage: false,
-            enableLobby: false,              // Hard kill waiting room logic
+            enableLobby: false,              // Kill waiting room hooks
             lobby: { enabled: false },
             requireDisplayName: false,
+            enableClosePage: false
           },
           interfaceConfigOverwrite: {
             SHOW_JITSI_WATERMARK: false,
@@ -110,9 +110,10 @@ const VideoCall: React.FC<VideoCallProps> = ({
           }
         };
 
+        // Instantiate frame instance directly using window context
         apiRef.current = new (window as any).JitsiMeetExternalAPI(domain, options);
 
-        // Hardware hardware permission pass-through injection
+        // Hardware permissions pipeline pass-through injection
         const iframe = containerRef.current.querySelector('iframe');
         if (iframe) {
           iframe.setAttribute('allow', 'camera *; microphone *; display-capture *; autoplay *; fullscreen *');
@@ -189,9 +190,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
       </div>
 
       {/* Main Core Framework Target Element */}
-      <div className="flex-1 bg-black relative" ref={containerRef}>
-         {/* The API target handles its own internal loading state natively now */}
-      </div>
+      <div className="flex-1 bg-black relative" ref={containerRef} />
 
       {/* Invite System Modal Wrapper */}
       {showInviteModal && (
